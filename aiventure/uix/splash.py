@@ -11,7 +11,7 @@ class SplashScreen(Screen):
 
     def on_enter(self):
         self.app = App.get_running_app()
-        threading.Thread(target=self.load_ai, args=('user/models/vanilla-s',)).start()
+        threading.Thread(target=self.load_ai, args=('user/models/vanilla-l',)).start()
         pass
 
     def load_ai(self, model_path):

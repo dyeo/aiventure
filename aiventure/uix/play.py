@@ -6,9 +6,11 @@ class PlayScreen(Screen):
     def on_enter(self):
         self.app = App.get_running_app()
         self.ids.input.hint = 'Enter a starting context. eg. "You are a farmer in a countryside village."'
+        self.update_output()
 
     def on_send(self):
         text = self.ids.input.text
+        text = text.strip()
         self.ids.input.text = ''
         if self.app.adventure.context == '':
             self.app.adventure.context = text
@@ -16,4 +18,7 @@ class PlayScreen(Screen):
         else:
             self.app.adventure.get_result(text)
             self.ids.input.hint = 'Enter an action. eg. "You attack the orc with your scythe."'
+        self.update_output()
+
+    def update_output(self):
         self.ids.output.text = '\n'.join(self.app.adventure.full_story)
