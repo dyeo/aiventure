@@ -1,6 +1,6 @@
 # aiventure
 
-**aiventure** (pronounced AI-venture) is an attempt at creating an entirely open-source, GPT-2-based AI text adventure game.
+**aiventure** (pronounced AI-venture) is an attempt at creating an entirely free, GPT-2-based AI text adventure game.
 aiventure seeks to meet the following goals during its development:
 
 1. A user-friendly UI that provides all of the editing capabilities required of a game of this type.
