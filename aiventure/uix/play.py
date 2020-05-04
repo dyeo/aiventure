@@ -16,9 +16,9 @@ class PlayScreen(Screen):
             self.app.adventure.context = text
             self.ids.input.hint = 'Enter an inciting incident. eg. "You are plowing the fields, when suddenly"'
         else:
-            self.app.adventure.get_result(text)
+            self.app.adventure.get_filtered_result(text)
             self.ids.input.hint = 'Enter an action. eg. "You attack the orc with your scythe."'
         self.update_output()
 
     def update_output(self):
-        self.ids.output.text = '\n'.join(self.app.adventure.full_story)
+        self.ids.output.text = self.app.adventure.displayed_story
