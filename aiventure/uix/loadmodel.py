@@ -1,5 +1,4 @@
 import threading
-import time
 
 from kivy.logger import Logger
 from kivy.app import App
