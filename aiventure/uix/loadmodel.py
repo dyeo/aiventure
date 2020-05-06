@@ -20,4 +20,3 @@ class LoadModelScreen(Screen):
         Logger.info(f'AI: Model loaded at "{model_path}"')
         self.app.adventure = Adventure(self.app.ai, '')
         self.app.sm.current = 'play'
-        pass

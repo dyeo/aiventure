@@ -7,6 +7,8 @@ import numpy
 
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
+from kivy.logger import Logger
+
 from aiventure.ai.sample import sample_sequence
 
 
@@ -38,6 +40,8 @@ class AI(object):
         self.use_gpu = torch.cuda.is_available() and use_gpu
         self.dtype = torch.float16
         self.device = torch.device("cuda" if self.use_gpu else "cpu")
+
+        Logger.info(f'AI: Initializing model using {self.device} in {self.dtype} mode')
 
         seed = random.randint(0, 2147483647)
         numpy.random.seed(seed)

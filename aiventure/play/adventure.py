@@ -17,6 +17,20 @@ class Adventure(object):
         self.actions = []
         self.results = []
 
+    def to_dict(self) -> dict:
+        result = {}
+        result['context'] = self.context
+        result['memory'] = self.memory
+        result['actions'] = self.actions
+        result['results'] = self.results
+        return result
+
+    def from_dict(self, d):
+        self.context = d['context'] 
+        self.memory = d['memory']  
+        self.actions = d['actions'] 
+        self.results = d['results']
+
     @property
     def story(self) -> list:
         """
@@ -44,6 +58,10 @@ class Adventure(object):
 
     @property
     def displayed_story(self) -> str:
+        """
+        The story, as it is to be displayed, after filtering.
+        :return: A formatted string that is the filtered full story output.
+        """
         return self.filter_display(self.full_story)
 
     def get_result(self, action: str, record: bool = True) -> str:
