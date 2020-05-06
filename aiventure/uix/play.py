@@ -113,7 +113,7 @@ class PlayScreen(Screen):
 
     def do_action(self, text) -> None:
         text = text.strip()
-        if self.app.adventure.context == '':
+        if self.app.adventure.context == '' and len(self.app.adventure.actions) == 0:
             self.app.adventure.context = text
             self.ids.input.hint_text = 'Enter an inciting incident. eg. "You are plowing the fields, when suddenly"'
         else:
