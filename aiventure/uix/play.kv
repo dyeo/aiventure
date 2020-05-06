@@ -6,7 +6,7 @@
 		spacing: 4
 
 		ScrollView:
-			size_hint: (1,4)
+			id: scroll_input
 			do_scroll_y: True
 
 			Label:
@@ -18,13 +18,59 @@
 
 		BoxLayout:
 			spacing: 4
+			size_hint: (1, None)
+			height: 96
 
 			TextInput:
+				do_scroll_y: True
 				id: input
 				text: ''
-				size_hint: (2,1)
 
 			Button:
-				id: send
+				id: button_send
 				text: 'Send'
+				size_hint: (1.0/6.0, 1)
 				on_release: root.on_send()
+
+		GridLayout:
+			id: group_bottom
+			cols: 6
+			spacing: 4
+			size_hint: (1, None)
+			height: 64
+
+			Button:
+				id: button_save
+				disabled: True
+				text: 'Save'
+				on_release: root.on_save()
+							
+			Button:
+				id: button_load
+				disabled: True
+				text: 'Load'
+				on_release: root.on_load()
+			
+			Button:
+				id: button_context
+				disabled: True
+				text: 'Context'
+				on_release: root.on_context()
+			
+			Button:
+				id: button_alter
+				disabled: True
+				text: 'Alter'
+				on_release: root.on_alter()
+			
+			Button:
+				id: button_revert
+				disabled: True
+				text: 'Revert'
+				on_release: root.on_revert()
+							
+			Button:
+				id: button_retry
+				disabled: True
+				text: 'Retry'
+				on_release: root.on_retry()

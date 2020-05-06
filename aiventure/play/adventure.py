@@ -1,3 +1,5 @@
+from kivy.app import App
+
 from aiventure.ai import AI
 
 
@@ -5,49 +7,109 @@ class Adventure(object):
     def __init__(
             self,
             ai: AI,
-            context: str
+            context: str,
+            memory: int = 20
     ):
+        self.app = App.get_running_app()
         self.ai = ai
         self.context = context
+        self.memory = memory
         self.actions = []
         self.results = []
+
+    def to_dict(self) -> dict:
+        result = {}
+        result['context'] = self.context
+        result['memory'] = self.memory
+        result['actions'] = self.actions
+        result['results'] = self.results
+        return result
+
+    def from_dict(self, d):
+        self.context = d['context'] 
+        self.memory = d['memory']  
+        self.actions = d['actions'] 
+        self.results = d['results']
 
     @property
     def story(self) -> list:
         """
-        The user actions and AI results in chronological order.
-        This DOES NOT include the story context.
+        The user actions and AI results in chronological order, not including the story context.
         :return: A list of action and result strings, interspersed, starting with the first action.
         """
-        result = [s for p in zip(self.actions, self.results) for s in p]
-        return [s for s in result if s and len(s.strip()) > 0]
+        res = [s for p in zip(self.actions, self.results) for s in p]
+        return [s for s in res if s and len(s.strip()) > 0]
 
     @property
     def full_story(self) -> list:
         """
-        The user actions and AI results in chronological order.
-        This DOES include the story context.
+        The user actions and AI results in chronological order, including the story context.
         :return: The story context string, followed by a list of action and result strings, interspersed, starting with the first action.
         """
-        if self.context:
-            return [self.context] + self.story
-        else:
-            return self.story
+        return ([self.context] if self.context else []) + self.story
+
+    @property
+    def remembered_story(self) -> list:
+        """
+        The last portion remembered by the AI's memory.
+        :return: The story context string, followed by a list of the last `self.memory` action and result strings, interspersed.
+        """
+        return ([self.context] if self.context else []) + self.story[-self.memory:]
+
+    @property
+    def displayed_story(self) -> str:
+        """
+        The story, as it is to be displayed, after filtering.
+        :return: A formatted string that is the filtered full story output.
+        """
+        return self.filter_display(self.full_story)
 
     def get_result(self, action: str, record: bool = True) -> str:
         """
-        Gets a result from the AI, taking into account the existing chat.
+        Gets a raw result from the AI, taking into account the existing story.
         :param action: The action the user has submitted to the AI.
         :param record: Should the result be recorded to the story?
         :return: An acceptable result from the AI.
         """
-        temp_story = self.full_story
+        temp_story = self.remembered_story
         if action:
             temp_story += [action]
-        temp_story = '\n'.join(self.full_story)
+        temp_story = ' '.join(temp_story) + ' '
         result = self.ai.generate(temp_story)
         if record:
             self.actions.append(action)
             self.results.append(result)
         return result
 
+    def get_filtered_result(self, action: str, record: bool = True) -> str:
+        """
+        Gets a filtered result from the AI using a filtered action.
+        :param action: The action to be filtered and submitted to the AI.
+        :param record: SHould the result be recorded to the story?
+        """
+        action = self.filter_input(action)
+        temp_story = self.remembered_story
+        if action:
+            temp_story += [action]
+        temp_story = ' '.join(temp_story) + ' '
+        result = self.ai.generate(temp_story)
+        result = self.filter_output(result)
+        if record:
+            self.actions.append(action)
+            self.results.append(result)
+        return result
+
+    def filter_input(self, input: str) -> str:
+        result = input
+        for filter in self.app.input_filters:
+            result = filter(result)
+        return result
+        
+    def filter_output(self, input: str) -> str:
+        result = input
+        for filter in self.app.output_filters:
+            result = filter(result)
+        return result
+
+    def filter_display(self, input: list) -> str:
+        return self.app.display_filter(input)
