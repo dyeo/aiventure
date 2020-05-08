@@ -16,7 +16,14 @@ class LoadModelScreen(Screen):
 
     def load_ai(self, model_path):
         Logger.info(f'AI: Loading model located at "{model_path}"')
-        self.app.ai = AI(model_path)
+        self.app.ai = AI(
+            model_path, 
+            generate_count=self.app.settings.get('ai','gen_count'),
+            temperature=self.app.settings.get('ai','temperature'),
+            top_k=self.app.settings.get('ai','top_k'),
+            top_p=self.app.settings.get('ai','top_p'),
+            rep_pen=self.app.settings.get('ai','rep_pen')
+        )
         Logger.info(f'AI: Model loaded at "{model_path}"')
         self.app.adventure = Adventure(self.app.ai, '')
         self.app.sm.current = 'play'

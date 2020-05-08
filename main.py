@@ -31,7 +31,12 @@ class AIventureApp(App):
 				'userdir':'user'
 			},
 			'ai': {
-				'model':'gpt2-xl'
+				'model':'gpt2-xl',
+				'gen_count':60,
+				'temperature':0.8,
+				'top_k':40,
+				'top_p':0.9,
+				'rep_pen':1.1
 			},
 			'modules': {
 				'input_filters':['aiventure:filters'],
@@ -49,7 +54,7 @@ class AIventureApp(App):
 	def init_mods(self) -> None:
 		"""
 		"""
-		sys.path.append(self.settings['general']['userdir'])
+		sys.path.append(self.settings.get('general','userdir'))
 
 		self.loaded_modules = {}
 
@@ -57,17 +62,17 @@ class AIventureApp(App):
 		self.output_filters = []
 		self.display_filter = None
 				
-		for f in self.settings['modules']['input_filters']:
+		for f in self.settings.get('modules','input_filters'):
 			domain,module = f.split(':')
 			Logger.info(f'Modules: Loading {f}.filter_input')
 			self.input_filters += [self.load_submodule(domain, module, 'filter_input')]
 
-		for f in self.settings['modules']['output_filters']:
+		for f in self.settings.get('modules','output_filters'):
 			domain,module = f.split(':')
 			Logger.info(f'Modules: Loading {f}.filter_output')
 			self.output_filters += [self.load_submodule(domain, module, 'filter_output')]
 
-		domain,module = self.settings['modules']['display_filter'].split(':')
+		domain,module = self.settings.get('modules','display_filter').split(':')
 		Logger.info(f'Modules: Loading {f}.filter_display')
 		self.display_filter = self.load_submodule(domain, module, 'filter_display')
 
@@ -84,10 +89,10 @@ class AIventureApp(App):
 	def get_user_path(self, *args) -> str:
 		"""
 		"""
-		return os.path.join(self.settings['general']['userdir'], *args)
+		return os.path.join(self.settings.get('general','userdir'), *args)
 
 	def get_model_path(self) -> str:
-		return self.get_user_path('models', self.settings['ai']['model'])
+		return self.get_user_path('models', self.settings.get('ai','model'))
 
 	def get_module_path(self, domain: str, module: str) -> str:
 		return self.get_user_path('modules', domain, f'{module}.py')
