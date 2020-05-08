@@ -32,7 +32,8 @@ class AIventureApp(App):
 			},
 			'ai': {
 				'model':'gpt2-xl',
-				'gen_count':60,
+				'gen_length':60,
+				'batch_size':1,
 				'temperature':0.8,
 				'top_k':40,
 				'top_p':0.9,

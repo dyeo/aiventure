@@ -64,6 +64,17 @@ class Adventure(object):
         """
         return self.filter_display(self.full_story)
 
+    def generate(self, story: str) -> str:
+        return self.ai.generate(
+            story,            
+            length=self.app.settings.get('ai','gen_length'),
+            batch_size=self.app.settings.get('ai','batch_size'),
+            temperature=self.app.settings.get('ai','temperature'),
+            top_k=self.app.settings.get('ai','top_k'),
+            top_p=self.app.settings.get('ai','top_p'),
+            rep_pen=self.app.settings.get('ai','rep_pen'),
+        )
+
     def get_result(self, action: str, record: bool = True) -> str:
         """
         Gets a raw result from the AI, taking into account the existing story.
@@ -75,7 +86,7 @@ class Adventure(object):
         if action:
             temp_story += [action]
         temp_story = ' '.join(temp_story) + ' '
-        result = self.ai.generate(temp_story)
+        result = self.generate(temp_story)
         if record:
             self.actions.append(action)
             self.results.append(result)
@@ -92,7 +103,7 @@ class Adventure(object):
         if action:
             temp_story += [action]
         temp_story = ' '.join(temp_story) + ' '
-        result = self.ai.generate(temp_story)
+        result = self.generate(temp_story)
         result = self.filter_output(result)
         if record:
             self.actions.append(action)
