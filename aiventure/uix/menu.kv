@@ -1,0 +1,109 @@
+<SelectableLabel>:
+    # Draw a background to indicate selection
+    canvas.before:
+        Color:
+            rgba: (.0, .0, 1, .3) if self.selected else (0, 0, 0, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<MenuScreen>:
+    padding: (4,4)
+
+    TabbedPanel:
+        do_default_tab: False
+        
+        # CHOOSE MODEL TAB
+        TabbedPanelItem:
+            text:'Choose Model'
+            BoxLayout:
+                padding: (4,4)
+                orientation: 'vertical'
+                # Choose Model Children
+                RecycleView:
+                    id: view_model
+                    viewclass: 'SelectableLabel'
+                    SelectableRecycleBoxLayout:
+                        spacing: 4
+                        default_size: (None, dp(32))
+                        default_size_hint: (1,None)
+                        size_hint: (1,None)
+                        height: self.minimum_height
+                        orientation: 'vertical'
+                        multiselect: False
+                        touch_multiselect: False
+                Button:
+                    text:'Load Model'
+                    size_hint:(1,None)
+                    height:32
+                    disabled:True
+                
+
+        # NEW GAME TAB
+        TabbedPanelItem:
+            text:'New Game'
+            BoxLayout:
+                padding: (4,4)
+                spacing: 4
+                orientation: 'vertical'
+                # New Game Children
+                Label:
+                    text:'Game Name'
+                    size_hint: (1,None)
+                    height:32
+                TextInput:
+                    id: input_context
+                    size_hint: (1,None)
+                    height:32
+                    multiline: False
+                    do_scroll_y: False
+                    id: input
+                    text: ''
+                Label:
+                    text:'Story Context'
+                    size_hint: (1,None)
+                    height:32
+                TextInput:
+                    id: input_context
+                    do_scroll_y: True
+                    id: input
+                    text: ''
+                Label:
+                    text:'Starting Prompt'
+                    size_hint: (1,None)
+                    height:32
+                TextInput:
+                    id: input_prompt
+                    do_scroll_y: True
+                    id: input
+                    text: ''
+                Button:
+                    id: button_start_new
+                    text: 'Start Adventure'
+                    disabled: True
+                    size_hint: (1,None)
+                    height:32
+        
+        # LOAD GAME TAB
+        TabbedPanelItem:
+            text:'Load Game'
+            BoxLayout:
+                padding: (4,4)
+                orientation: 'vertical'
+                # Load Game Children
+
+        # SETTINGS TAB
+        TabbedPanelItem:
+            text:'Settings'
+            BoxLayout:
+                padding: (4,4)
+                orientation: 'vertical'
+                # Settings Children
+        
+        # MODULES TAB
+        TabbedPanelItem:
+            text:'Modules'
+            BoxLayout:
+                padding: (4,4)
+                orientation: 'vertical'
+                # Modules Children

@@ -8,6 +8,7 @@ from kivy.uix.screenmanager import ScreenManager
 from kivy.lang.builder import Builder
 
 from aiventure.utils.settings import Settings
+from aiventure.uix.menu import MenuScreen
 from aiventure.uix.loadmodel import LoadModelScreen
 from aiventure.uix.play import PlayScreen
 
@@ -81,11 +82,11 @@ class AIventureApp(App):
 		"""
 		"""
 		self.sm = ScreenManager()
-		self.screens = { 'loadmodel':LoadModelScreen, 'play':PlayScreen }
+		self.screens = { 'menu':MenuScreen, 'loadmodel':LoadModelScreen, 'play':PlayScreen }
 		for n,s in self.screens.items():
 			Builder.load_file(f'aiventure/uix/{n}.kv')
 			self.sm.add_widget(s(name=n))
-		self.sm.current = 'loadmodel'
+		self.sm.current = 'menu'
 
 	def get_user_path(self, *args) -> str:
 		"""
