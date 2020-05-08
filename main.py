@@ -31,7 +31,7 @@ class AIventureApp(App):
 				'userdir':'user'
 			},
 			'ai': {
-				'model':'vanilla-s'
+				'model':'gpt2-xl'
 			},
 			'modules': {
 				'input_filters':['aiventure:filters'],
