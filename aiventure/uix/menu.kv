@@ -16,6 +16,7 @@
         # AI MODEL TAB
         TabbedPanelItem:
             text:'AI Model'
+
             BoxLayout:
                 padding: (4,4)
                 orientation: 'vertical'
@@ -23,6 +24,7 @@
                 RecycleView:
                     id: view_model
                     viewclass: 'SelectableLabel'
+
                     SelectableRecycleBoxLayout:
                         spacing: 4
                         default_size: (None, dp(32))
@@ -32,11 +34,13 @@
                         orientation: 'vertical'
                         multiselect: False
                         touch_multiselect: False
+
                 Label:
                     id: label_model
                     text: 'No Model Loaded'
                     size_hint:(1,None)
                     height:32
+
                 Button:
                     id: button_load_model
                     text:'Load Model'
@@ -49,6 +53,7 @@
         # NEW GAME TAB
         TabbedPanelItem:
             text:'New Game'
+
             BoxLayout:
                 padding: (4,4)
                 spacing: 4
@@ -58,6 +63,7 @@
                     text:'Game Name'
                     size_hint: (1,None)
                     height:32
+
                 TextInput:
                     id: input_name
                     text: ''
@@ -67,10 +73,12 @@
                     height:32
                     multiline: False
                     do_scroll_y: False
+
                 Label:
                     text:'Story Context'
                     size_hint: (1,None)
                     height:32
+
                 TextInput:
                     id: input_context
                     text: ''
@@ -78,10 +86,12 @@
                     on_text: root.update_button_start_new()
                     multiline: True
                     do_scroll_y: True
+
                 Label:
                     text:'Starting Prompt'
                     size_hint: (1,None)
                     height:32
+
                 TextInput:
                     id: input_prompt
                     text: ''
@@ -89,6 +99,7 @@
                     on_text: root.update_button_start_new()
                     multiline: True
                     do_scroll_y: True
+
                 Button:
                     id: button_start_new
                     text: 'Start Adventure'
@@ -99,6 +110,7 @@
         # LOAD GAME TAB
         TabbedPanelItem:
             text:'Load Game'
+
             BoxLayout:
                 padding: (4,4)
                 orientation: 'vertical'
@@ -106,6 +118,7 @@
         # SETTINGS TAB
         TabbedPanelItem:
             text:'Settings'
+
             BoxLayout:
                 padding: (4,4)
                 orientation: 'vertical'
@@ -113,6 +126,7 @@
         # MODULES TAB
         TabbedPanelItem:
             text:'Modules'
+
             BoxLayout:
                 padding: (4,4)
                 orientation: 'vertical'
