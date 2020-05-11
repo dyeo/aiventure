@@ -7,6 +7,20 @@
             pos: self.pos
             size: self.size
 
+
+<SelectionView@RecycleView>:
+
+    SelectableRecycleBoxLayout:
+        spacing: 4
+        default_size: (None, dp(32))
+        default_size_hint: (1,None)
+        size_hint: (1,None)
+        height: self.minimum_height
+        orientation: 'vertical'
+        multiselect: False
+        touch_multiselect: False
+
+
 <MenuScreen>:
     padding: (4,4)
 
@@ -21,19 +35,9 @@
                 padding: (4,4)
                 orientation: 'vertical'
 
-                RecycleView:
+                SelectionView:
                     id: view_model
-                    viewclass: 'SelectableLabel'
-
-                    SelectableRecycleBoxLayout:
-                        spacing: 4
-                        default_size: (None, dp(32))
-                        default_size_hint: (1,None)
-                        size_hint: (1,None)
-                        height: self.minimum_height
-                        orientation: 'vertical'
-                        multiselect: False
-                        touch_multiselect: False
+                    viewclass: 'SelectableModelLabel'
 
                 Label:
                     id: label_model
@@ -114,6 +118,18 @@
             BoxLayout:
                 padding: (4,4)
                 orientation: 'vertical'
+                
+                SelectionView:
+                    id: view_game
+                    viewclass: 'SelectableGameLabel'
+                    
+                Button:
+                    id: button_start_load
+                    text:'Load Aventure'
+                    on_release: root.on_start_load()
+                    size_hint:(1,None)
+                    height:32
+                    disabled:True
 
         # SETTINGS TAB
         TabbedPanelItem:
