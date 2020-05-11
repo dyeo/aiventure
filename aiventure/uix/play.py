@@ -42,6 +42,7 @@ class PlayScreen(Screen):
 
     def on_send(self, text = None) -> None:
         text = text or self.ids.input.text
+        text = self.filter_input(text)
         threading.Thread(target=self._on_send_thread, args=(text,)).start()
 
     def _on_send_thread(self, text):
@@ -63,7 +64,8 @@ class PlayScreen(Screen):
         self.ids.button_send.disabled = False
 
     def do_action(self, text) -> None:
-        self.app.adventure.get_result(self.app.generator, text)
+        result = self.app.adventure.get_result(self.app.generator, text)
+        self.app.adventure.results[-1] = self.filter_output(result)
 
     def on_alter(self) -> None:
         if self.mode == 'a':
@@ -108,8 +110,8 @@ class PlayScreen(Screen):
         if update:
             self.update_display()
 
-    def update_display(self, scroll:bool=True) -> None:
-        self.ids.output.text = '\n'.join(self.app.adventure.full_story)
+    def update_display(self, scroll: bool=True) -> None:
+        self.ids.output.text = self.filter_display(self.app.adventure.full_story)
         if scroll:
             self.ids.scroll_input.scroll_y = 0
         if self.mode == 'a':
@@ -128,10 +130,25 @@ class PlayScreen(Screen):
         for b in self.ids.group_bottom.children:
             b.disabled = (b not in buttons)
 
-    def alter_last(self, text) -> None:
+    def alter_last(self, text: str) -> None:
         self.app.adventure.results[-1] = text
         self._end_alter()
 
-    def edit_context(self, text) -> None:
+    def edit_context(self, text: str) -> None:
         self.app.adventure.context = text
         self._end_context()
+
+    def filter_input(self, text: str) -> str:
+        result = text
+        for f in self.app.input_filters:
+            result = f(result)
+        return result
+
+    def filter_output(self, text: str) -> str:
+        result = text
+        for f in self.app.output_filters:
+            result = f(result)
+        return result
+
+    def filter_display(self, story: list) -> str:
+        return self.app.display_filter(story)
