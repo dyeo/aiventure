@@ -1,3 +1,30 @@
+#:import Factory kivy.factory.Factory
+
+<MenuPopup@Popup>:
+	title: 'Menu'
+	size_hint: (0.4,0.667)
+	auto_dismiss: False
+
+	BoxLayout:
+		spacing: 4
+		orientation: 'vertical'
+
+		Button:
+			text: 'Resume'
+			on_release: root.dismiss()
+
+		Button:
+			text: 'Save Adventure'
+			on_release: root.on_save()
+
+		Button:
+			text: 'Load Adventure'
+			on_release: root.on_load()
+
+		Button:
+			text: 'Quit to Main Menu'
+			on_release: root.on_quit()
+
 <PlayScreen>:
 
 	BoxLayout:
@@ -40,16 +67,10 @@
 			height: 64
 
 			Button:
-				id: button_save
-				disabled: True
-				text: 'Save'
-				on_release: root.on_save()
-							
-			Button:
-				id: button_load
-				disabled: True
-				text: 'Load'
-				on_release: root.on_load()
+				id: button_menu
+				disabled: False
+				text: 'Menu'
+				on_release: Factory.MenuPopup().open()
 			
 			Button:
 				id: button_context

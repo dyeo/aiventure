@@ -1,17 +1,15 @@
+from typing import *
+
 from kivy.app import App
 
-from aiventure.ai import AI
-
+from aiventure.ai.generator import Generator
 
 class Adventure(object):
     def __init__(
             self,
-            ai: AI,
-            context: str,
+            context: str = None,
             memory: int = 20
     ):
-        self.app = App.get_running_app()
-        self.ai = ai
         self.context = context
         self.memory = memory
         self.actions = []
@@ -55,16 +53,8 @@ class Adventure(object):
         :return: The story context string, followed by a list of the last `self.memory` action and result strings, interspersed.
         """
         return ([self.context] if self.context else []) + self.story[-self.memory:]
-
-    @property
-    def displayed_story(self) -> str:
-        """
-        The story, as it is to be displayed, after filtering.
-        :return: A formatted string that is the filtered full story output.
-        """
-        return self.filter_display(self.full_story)
-
-    def get_result(self, action: str, record: bool = True) -> str:
+    
+    def get_result(self, generator: Generator, action: str, record: bool = True) -> str:
         """
         Gets a raw result from the AI, taking into account the existing story.
         :param action: The action the user has submitted to the AI.
@@ -75,41 +65,8 @@ class Adventure(object):
         if action:
             temp_story += [action]
         temp_story = ' '.join(temp_story) + ' '
-        result = self.ai.generate(temp_story)
+        result = generator.generate(temp_story)
         if record:
             self.actions.append(action)
             self.results.append(result)
         return result
-
-    def get_filtered_result(self, action: str, record: bool = True) -> str:
-        """
-        Gets a filtered result from the AI using a filtered action.
-        :param action: The action to be filtered and submitted to the AI.
-        :param record: SHould the result be recorded to the story?
-        """
-        action = self.filter_input(action)
-        temp_story = self.remembered_story
-        if action:
-            temp_story += [action]
-        temp_story = ' '.join(temp_story) + ' '
-        result = self.ai.generate(temp_story)
-        result = self.filter_output(result)
-        if record:
-            self.actions.append(action)
-            self.results.append(result)
-        return result
-
-    def filter_input(self, input: str) -> str:
-        result = input
-        for filter in self.app.input_filters:
-            result = filter(result)
-        return result
-        
-    def filter_output(self, input: str) -> str:
-        result = input
-        for filter in self.app.output_filters:
-            result = filter(result)
-        return result
-
-    def filter_display(self, input: list) -> str:
-        return self.app.display_filter(input)

@@ -38,14 +38,14 @@ def top_p_logits(logits, p, filter_value=-float("Inf")):
 
 def sample_sequence(
         model,
-        length,
-        batch_size=None,
-        context=None,
+        context,
+        device="cuda",
+        length=60,
+        batch_size=1,
         temperature=1,
         top_k=0,
         top_p=0.9,
         rep_pen=1.0,
-        device="cuda",
 ):
     context = torch.tensor(context, device=device, dtype=torch.long)
     context = context.unsqueeze(0).repeat(batch_size, 1)

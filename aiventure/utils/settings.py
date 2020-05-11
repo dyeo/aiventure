@@ -28,3 +28,9 @@ class Settings(object):
 		with open(self.filename, 'w') as json_file:
 			json.dump(self.data, json_file, indent=4)
 
+	def get(*keys):
+		keys = list(keys)
+		result = keys[0]
+		for k in keys[1:]:
+			result = result[k]
+		return result
