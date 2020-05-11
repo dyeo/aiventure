@@ -5,11 +5,33 @@ import traceback
 from kivy.logger import Logger
 from kivy.app import App
 from kivy.uix.screenmanager import Screen
+from kivy.uix.popup import Popup
+
+from aiventure.utils import init_widget
+
+class MenuPopup(Popup):
+    def __init__(self, **kargs):
+        super(MenuPopup, self).__init__(**kargs)
+        init_widget(self)
+
+    def on_save(self) -> None:
+        with open(self.app.get_user_path('adventures','save.json'), 'w') as json_file:
+            json.dump(self.app.adventure.to_dict(), json_file)
+        self.screen.update_display()
+        
+    def on_load(self) -> None:
+        with open(self.app.get_user_path('adventures','save.json'), 'r') as json_file:
+            self.app.adventure.from_dict(json.load(json_file))
+        self.screen.update_display()
+
+    def on_quit(self) -> None:
+        self.dismiss()
+        self.app.sm.current = 'menu'
 
 class PlayScreen(Screen):
 
-    def __init__(self, **kw):
-        super().__init__(**kw)
+    def __init__(self, **kargs):
+        super(PlayScreen, self).__init__(**kargs)
         self.mode = '' # 'a' for alter
 
     def on_enter(self) -> None:
@@ -20,16 +42,6 @@ class PlayScreen(Screen):
     def on_send(self) -> None:
         threading.Thread(target=self._on_send_thread, args=(self.ids.input.text,)).start()
 
-    def on_save(self) -> None:
-        with open(self.app.get_user_path('adventures','save.json'), 'w') as json_file:
-            json.dump(self.app.adventure.to_dict(), json_file)
-        self.update_display()
-    
-    def on_load(self) -> None:        
-        with open(self.app.get_user_path('adventures','save.json'), 'r') as json_file:
-            self.app.adventure.from_dict(json.load(json_file))
-        self.update_display()
-    
     def on_alter(self) -> None:
         if self.mode == 'a':
             self._end_alter()
@@ -82,7 +94,7 @@ class PlayScreen(Screen):
         elif self.mode == 'c':
             self.enable_bottom_buttons([self.ids.button_context])
         else:
-            buttons = [self.ids.button_save, self.ids.button_load, self.ids.button_context]
+            buttons = [self.ids.button_menu, self.ids.button_context]
             len_results = len(self.app.adventure.results)
             buttons += [self.ids.button_alter] if len_results > 0 else []
             buttons += [self.ids.button_revert] if len_results > 0 else []

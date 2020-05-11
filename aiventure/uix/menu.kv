@@ -33,10 +33,12 @@
                         multiselect: False
                         touch_multiselect: False
                 Button:
+                    id: button_load_model
                     text:'Load Model'
                     size_hint:(1,None)
                     height:32
                     disabled:True
+                    on_release: root.load_ai()
                 
 
         # NEW GAME TAB
@@ -52,7 +54,7 @@
                     size_hint: (1,None)
                     height:32
                 TextInput:
-                    id: input_context
+                    id: input_name
                     size_hint: (1,None)
                     height:32
                     multiline: False
@@ -65,6 +67,7 @@
                     height:32
                 TextInput:
                     id: input_context
+                    multiline: True
                     do_scroll_y: True
                     id: input
                     text: ''
@@ -74,6 +77,7 @@
                     height:32
                 TextInput:
                     id: input_prompt
+                    multiline: True
                     do_scroll_y: True
                     id: input
                     text: ''

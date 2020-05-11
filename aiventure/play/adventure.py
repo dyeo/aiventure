@@ -2,7 +2,6 @@ from kivy.app import App
 
 from aiventure.ai import AI
 
-
 class Adventure(object):
     def __init__(
             self,
