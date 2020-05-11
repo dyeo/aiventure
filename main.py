@@ -9,7 +9,6 @@ from kivy.lang.builder import Builder
 
 from aiventure.utils.settings import Settings
 from aiventure.uix.menu import MenuScreen
-from aiventure.uix.loadmodel import LoadModelScreen
 from aiventure.uix.play import PlayScreen
 
 class AIventureApp(App):
@@ -33,6 +32,7 @@ class AIventureApp(App):
 			},
 			'ai': {
 				'model':'gpt2-xl',
+				'memory': 20,
 				'gen_length':60,
 				'batch_size':1,
 				'temperature':0.8,
@@ -50,7 +50,7 @@ class AIventureApp(App):
 	def init_ai(self) -> None:
 		"""
 		"""
-		self.ai = None
+		self.generator = None
 		self.adventure = None
 
 	def init_mods(self) -> None:
@@ -82,7 +82,7 @@ class AIventureApp(App):
 		"""
 		"""
 		self.sm = ScreenManager()
-		self.screens = { 'menu':MenuScreen, 'loadmodel':LoadModelScreen, 'play':PlayScreen }
+		self.screens = { 'menu':MenuScreen, 'play':PlayScreen }
 		for n,s in self.screens.items():
 			Builder.load_file(f'aiventure/uix/{n}.kv')
 			self.sm.add_widget(s(name=n))
@@ -110,7 +110,6 @@ class AIventureApp(App):
 	def load_submodule(self, domain: str, module: str, submodule: str) -> str:
 		m = self.load_module(domain, module)
 		return getattr(m, submodule)
-
 
 if __name__ == "__main__":
     AIventureApp().run()

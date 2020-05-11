@@ -14,7 +14,8 @@ from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.recycleview.layout import LayoutSelectionBehavior
 
 from aiventure.utils import init_widget
-from aiventure.ai import AI
+from aiventure.ai.ai import AI
+from aiventure.ai.generator import LocalGenerator
 from aiventure.play.adventure import Adventure
 
 class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
@@ -55,36 +56,60 @@ class MenuScreen(Screen):
     
     def __init__(self, **kw):
         super().__init__(**kw)
+        self.app = App.get_running_app()
 
     def on_enter(self):
-        self.app = App.get_running_app()
+        self.app.adventure = Adventure()
         self.ids.view_model.data = [{'text': str(m)} for m in self.get_module_directories()]
+        self.update_button_start_new()
     
-    def get_module_directories(self) -> list:
-        modelsdir = self.app.get_user_path('models')
-        return [m.name for m in os.scandir(modelsdir) if self.model_is_valid(m.name, modelsdir)]
+    # AI MODEL TAB
 
-    def model_is_valid(self, model, modelsdir) -> bool:
-        return os.path.isfile(os.path.join(modelsdir, model, 'pytorch_model.bin')) \
-            and os.path.isfile(os.path.join(modelsdir, model, 'config.json')) \
-            and os.path.isfile(os.path.join(modelsdir, model, 'vocab.json'))
+    def get_module_directories(self) -> list:
+        return [m.name for m in os.scandir(self.app.get_user_path('models')) if self.model_is_valid(m.path)]
+
+    def model_is_valid(self, modelpath) -> bool:
+        return os.path.isfile(os.path.join(modelpath, 'pytorch_model.bin')) \
+            and os.path.isfile(os.path.join(modelpath, 'config.json')) \
+            and os.path.isfile(os.path.join(modelpath, 'vocab.json'))
 
     def load_ai(self):
-        threading.Thread(target=self.load_ai_thread).start()
-
-    def load_ai_thread(self):
-        self.ids.button_load_model.disabled = True
-        self.ids.button_load_model.text = 'Loading Model, Please Wait...'
-        model_path = self.app.get_model_path()
-        Logger.info(f'AI: Loading model located at "{model_path}"')
-        self.app.ai = AI(model_path)
-        Logger.info(f'AI: Model loaded at "{model_path}"')
-        self.app.adventure = Adventure(self.app.ai, '')
-        self.app.sm.current = 'play'
-        self.ids.button_load_model.text = 'Model Ready'
-
+        threading.Thread(target=self._load_ai_thread).start()
+        
     def on_model_selected(self, model):
         self.app.settings['ai']['model'] = model
         self.ids.button_load_model.disabled = False
-        self.ids.button_load_model.text = 'Load Model'
+
+    def _load_ai_thread(self):
+        self.ids.button_load_model.disabled = True
+        model_path = self.app.get_model_path()
+        model_name = os.path.split(model_path)[-1]
+        try:
+            self.ids.label_model.text = f'Loading Model "{model_name}"'
+            Logger.info(f'AI: Loading model at "{model_path}"')
+            self.app.generator = LocalGenerator(AI(model_path))
+            Logger.info(f'AI: Model loaded at "{model_path}"')
+        except Exception as e:
+            self.ids.label_model.text = f'Error Loading Model "{model_name}"'
+        else:
+            self.ids.label_model.text = f'Loaded Model: {model_name} ({self.app.generator.ai.model_info})'
+
+    # NEW GAME TAB
+
+    def on_start_new(self):
+        self.app.adventure.context = self.ids.input_context.text
+        self.app.adventure.actions.append(self.ids.input_prompt.text)
+        self.app.sm.current = 'play'
+
+    def update_button_start_new(self):
+        if self.app.generator:
+            self.ids.button_start_new.text = 'Start Adventure'
+            self.ids.button_start_new.disabled = not (
+                self.ids.input_name.text.strip() and \
+                self.ids.input_context.text.strip() and \
+                self.ids.input_prompt.text.strip() \
+            )
+        else:
+            self.ids.button_start_new.text = 'Please Load Model to Start'
+            self.ids.button_start_new.disabled = True
 

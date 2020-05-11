@@ -13,13 +13,13 @@
     TabbedPanel:
         do_default_tab: False
         
-        # CHOOSE MODEL TAB
+        # AI MODEL TAB
         TabbedPanelItem:
-            text:'Choose Model'
+            text:'AI Model'
             BoxLayout:
                 padding: (4,4)
                 orientation: 'vertical'
-                # Choose Model Children
+
                 RecycleView:
                     id: view_model
                     viewclass: 'SelectableLabel'
@@ -32,13 +32,18 @@
                         orientation: 'vertical'
                         multiselect: False
                         touch_multiselect: False
+                Label:
+                    id: label_model
+                    text: 'No Model Loaded'
+                    size_hint:(1,None)
+                    height:32
                 Button:
                     id: button_load_model
                     text:'Load Model'
+                    on_release: root.load_ai()
                     size_hint:(1,None)
                     height:32
                     disabled:True
-                    on_release: root.load_ai()
                 
 
         # NEW GAME TAB
@@ -48,43 +53,46 @@
                 padding: (4,4)
                 spacing: 4
                 orientation: 'vertical'
-                # New Game Children
+
                 Label:
                     text:'Game Name'
                     size_hint: (1,None)
                     height:32
                 TextInput:
                     id: input_name
+                    text: ''
+                    hint_text: 'Enter a name for this adventure.'
+                    on_text: root.update_button_start_new()
                     size_hint: (1,None)
                     height:32
                     multiline: False
                     do_scroll_y: False
-                    id: input
-                    text: ''
                 Label:
                     text:'Story Context'
                     size_hint: (1,None)
                     height:32
                 TextInput:
                     id: input_context
+                    text: ''
+                    hint_text: 'Enter a permanent story context, eg. "You are a lone adventurer, travelling the vast continent of Ileryn, performing good deeds for those in need."'
+                    on_text: root.update_button_start_new()
                     multiline: True
                     do_scroll_y: True
-                    id: input
-                    text: ''
                 Label:
                     text:'Starting Prompt'
                     size_hint: (1,None)
                     height:32
                 TextInput:
                     id: input_prompt
+                    text: ''
+                    hint_text: 'Enter a prompt to start the story, eg. "You are in a dungeon, searching for a rare artifact you have been sent to retrieve, when suddenly"'
+                    on_text: root.update_button_start_new()
                     multiline: True
                     do_scroll_y: True
-                    id: input
-                    text: ''
                 Button:
                     id: button_start_new
                     text: 'Start Adventure'
-                    disabled: True
+                    on_release: root.on_start_new()
                     size_hint: (1,None)
                     height:32
         
@@ -94,7 +102,6 @@
             BoxLayout:
                 padding: (4,4)
                 orientation: 'vertical'
-                # Load Game Children
 
         # SETTINGS TAB
         TabbedPanelItem:
@@ -102,7 +109,6 @@
             BoxLayout:
                 padding: (4,4)
                 orientation: 'vertical'
-                # Settings Children
         
         # MODULES TAB
         TabbedPanelItem:
@@ -110,4 +116,3 @@
             BoxLayout:
                 padding: (4,4)
                 orientation: 'vertical'
-                # Modules Children

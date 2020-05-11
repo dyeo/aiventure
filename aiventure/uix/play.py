@@ -8,6 +8,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.popup import Popup
 
 from aiventure.utils import init_widget
+from aiventure.play.adventure import Adventure
 
 class MenuPopup(Popup):
     def __init__(self, **kargs):
@@ -32,15 +33,37 @@ class PlayScreen(Screen):
 
     def __init__(self, **kargs):
         super(PlayScreen, self).__init__(**kargs)
+        self.app = App.get_running_app()
         self.mode = '' # 'a' for alter
 
     def on_enter(self) -> None:
-        self.app = App.get_running_app()
-        self.ids.input.hint_text = 'Enter a starting context. eg. "You are a farmer in a countryside village."'
-        self.update_display()
+        prompt = self.app.adventure.actions.pop(0)
+        self.on_send(prompt)
 
-    def on_send(self) -> None:
-        threading.Thread(target=self._on_send_thread, args=(self.ids.input.text,)).start()
+    def on_send(self, text = None) -> None:
+        text = text or self.ids.input.text
+        threading.Thread(target=self._on_send_thread, args=(text,)).start()
+
+    def _on_send_thread(self, text):
+        self.ids.input.disabled = True
+        self.ids.button_send.disabled = True
+        self.enable_bottom_buttons([])
+        self.ids.input.text = ''
+        try:
+            if self.mode == '':
+                self.do_action(text)
+            elif self.mode == 'a':
+                self.alter_last(text)
+            elif self.mode == 'c':
+                self.edit_context(text)
+        except Exception:
+            Logger.error(f"AI: {traceback.format_exc()}")
+        self.update_display()
+        self.ids.input.disabled = False
+        self.ids.button_send.disabled = False
+
+    def do_action(self, text) -> None:
+        self.app.adventure.get_result(self.app.generator, text)
 
     def on_alter(self) -> None:
         if self.mode == 'a':
@@ -86,7 +109,7 @@ class PlayScreen(Screen):
             self.update_display()
 
     def update_display(self, scroll:bool=True) -> None:
-        self.ids.output.text = self.app.adventure.displayed_story
+        self.ids.output.text = '\n'.join(self.app.adventure.full_story)
         if scroll:
             self.ids.scroll_input.scroll_y = 0
         if self.mode == 'a':
@@ -104,33 +127,6 @@ class PlayScreen(Screen):
     def enable_bottom_buttons(self, buttons: list) -> None:
         for b in self.ids.group_bottom.children:
             b.disabled = (b not in buttons)
-
-    def _on_send_thread(self, text):
-        self.ids.input.disabled = True
-        self.ids.button_send.disabled = True
-        self.enable_bottom_buttons([])
-        self.ids.input.text = ''
-        try:
-            if self.mode == '':
-                self.do_action(text)
-            elif self.mode == 'a':
-                self.alter_last(text)
-            elif self.mode == 'c':
-                self.edit_context(text)
-        except Exception:
-            Logger.error(f"AI: {traceback.format_exc()}")
-        self.update_display()
-        self.ids.input.disabled = False
-        self.ids.button_send.disabled = False
-
-    def do_action(self, text) -> None:
-        text = text.strip()
-        if self.app.adventure.context == '' and len(self.app.adventure.actions) == 0:
-            self.app.adventure.context = text
-            self.ids.input.hint_text = 'Enter an inciting incident. eg. "You are plowing the fields, when suddenly"'
-        else:
-            self.app.adventure.get_filtered_result(text)
-            self.ids.input.hint_text = 'Enter an action. eg. "You attack the orc with your scythe."'
 
     def alter_last(self, text) -> None:
         self.app.adventure.results[-1] = text
