@@ -7,7 +7,7 @@ from kivy.app import App
 from kivy.uix.screenmanager import Screen
 from kivy.uix.popup import Popup
 
-from aiventure.utils import init_widget
+from aiventure.utils import *
 from aiventure.play.adventure import Adventure
 
 class MenuPopup(Popup):
@@ -16,14 +16,18 @@ class MenuPopup(Popup):
         init_widget(self)
 
     def on_save(self) -> None:
-        with open(self.app.get_user_path('adventures','save.json'), 'w') as json_file:
+        savefile = get_save_name(self.app.adventure.name)
+        with open(self.app.get_user_path('adventures',f'{savefile}.json'), 'w') as json_file:
             json.dump(self.app.adventure.to_dict(), json_file)
         self.screen.update_display()
+        self.dismiss()
         
     def on_load(self) -> None:
-        with open(self.app.get_user_path('adventures','save.json'), 'r') as json_file:
+        savefile = get_save_name(self.app.adventure.name)
+        with open(self.app.get_user_path('adventures',f'{savefile}.json'), 'r') as json_file:
             self.app.adventure.from_dict(json.load(json_file))
         self.screen.update_display()
+        self.dismiss()
 
     def on_quit(self) -> None:
         self.dismiss()
@@ -37,8 +41,11 @@ class PlayScreen(Screen):
         self.mode = '' # 'a' for alter
 
     def on_enter(self) -> None:
-        prompt = self.app.adventure.actions.pop(0)
-        self.on_send(prompt)
+        if len(self.app.adventure.results) == 0:
+            prompt = self.app.adventure.actions.pop(0)
+            self.on_send(prompt)
+        else:
+            self.update_display()
 
     def on_send(self, text = None) -> None:
         text = text or self.ids.input.text
@@ -111,6 +118,7 @@ class PlayScreen(Screen):
             self.update_display()
 
     def update_display(self, scroll: bool=True) -> None:
+        self.ids.title_text.text = self.app.adventure.name
         self.ids.output.text = self.filter_display(self.app.adventure.full_story)
         if scroll:
             self.ids.scroll_input.scroll_y = 0

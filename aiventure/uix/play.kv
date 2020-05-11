@@ -1,6 +1,6 @@
 #:import Factory kivy.factory.Factory
 
-<MenuPopup@Popup>:
+<MenuPopup>:
 	title: 'Menu'
 	size_hint: (0.4,0.667)
 	auto_dismiss: False
@@ -32,6 +32,11 @@
 		padding: (4,4)
 		spacing: 4
 
+		Label:
+			id: title_text
+			size_hint: (1,None)
+			height: 32
+
 		ScrollView:
 			id: scroll_input
 			do_scroll_y: True
@@ -56,8 +61,9 @@
 			Button:
 				id: button_send
 				text: 'Send'
-				size_hint: (1.0/6.0, 1)
 				on_release: root.on_send()
+				disabled: True
+				size_hint: (1.0/6.0, 1)
 
 		GridLayout:
 			id: group_bottom
@@ -68,7 +74,7 @@
 
 			Button:
 				id: button_menu
-				disabled: False
+				disabled: True
 				text: 'Menu'
 				on_release: Factory.MenuPopup().open()
 			

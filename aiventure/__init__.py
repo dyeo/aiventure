@@ -50,7 +50,6 @@ class App(KivyApp):
 	def init_ai(self) -> None:
 		"""
 		"""
-		self.savefile = None
 		self.generator = None
 		self.adventure = None
 
