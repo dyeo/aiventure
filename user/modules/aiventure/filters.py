@@ -42,7 +42,7 @@ def filter_display(story: list) -> str:
         else:
             end = find_last_sentence_end(story[h])
             if end == len(story[h]):
-                result += '\n' + story[i]
+                result += '\n\n' + story[i]
             else:
                 result += ' ' + story[i]
     return result
