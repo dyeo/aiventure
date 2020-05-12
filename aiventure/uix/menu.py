@@ -77,6 +77,10 @@ class MenuScreen(Screen):
         self.init_saves()
         self.update_button_start_new()
         self.update_button_start_load()
+
+    def on_update(self):
+        self.update_button_start_new()
+        self.update_button_start_load()
     
     # AI MODEL TAB
 
@@ -105,6 +109,7 @@ class MenuScreen(Screen):
         try:
             self.ids.label_model.text = f'Loading Model "{model_name}"'
             Logger.info(f'AI: Loading model at "{model_path}"')
+            self.app.generator = None
             self.app.generator = LocalGenerator(AI(model_path))
             Logger.info(f'AI: Model loaded at "{model_path}"')
         except Exception as e:
@@ -112,10 +117,6 @@ class MenuScreen(Screen):
         else:
             self.ids.label_model.text = f'Loaded Model: {model_name} ({self.app.generator.ai.model_info})'
             self.on_update()
-
-    def on_update(self):
-        self.update_button_start_new()
-        self.update_button_start_load()
 
     # NEW GAME TAB
 

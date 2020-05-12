@@ -17,6 +17,7 @@ class AiventureApp(KivyApp):
 		"""
 		"""
 		self.title = 'AIventure'
+		self.threads = {}
 		self.init_ai()
 		self.init_mods()
 		self.init_ui()
@@ -30,6 +31,7 @@ class AiventureApp(KivyApp):
 		})
 		config.setdefaults('ai', {
 			'model':'gpt2-xl',
+			'timeout': 20.0,
 			'memory': 20,
 			'gen_length': 60,
 			'batch_size': 1,

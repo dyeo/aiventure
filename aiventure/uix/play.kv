@@ -25,6 +25,24 @@
 			text: 'Quit to Main Menu'
 			on_release: root.on_quit()
 
+
+<ErrorPopup>
+	title: 'Woops!'
+	size_hint: (0.4, 0.4)
+	auto_dismiss: False
+	BoxLayout:
+		Label:
+			id: error_text
+			text: ''
+			halign: 'center'
+			valign: 'middle'
+		Button:
+			text: 'Ok'
+			on_release: root.dismiss()
+			size_hint: (1,None)
+			height: 32
+			
+
 <PlayScreen>:
 
 	BoxLayout:
@@ -42,7 +60,7 @@
 			do_scroll_y: True
 
 			Label:
-				id: output
+				id: output_text
 				text: ''
 				markup: True
 				size_hint_y: None

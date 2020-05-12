@@ -10,3 +10,4 @@ python -m pip install kivy_deps.gstreamer==0.1.* --no-cache-dir
 python -m pip install kivy==1.11.1 --no-cache-dir
 python -m pip install torch===1.5.0 torchvision===0.6.0 -f https://download.pytorch.org/whl/torch_stable.html
 python -m pip install transformers
+python -m pip install func_timeout
