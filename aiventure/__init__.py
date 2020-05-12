@@ -6,6 +6,7 @@ from kivy.logger import Logger
 from kivy.app import App as KivyApp
 from kivy.uix.screenmanager import ScreenManager
 from kivy.lang.builder import Builder
+from kivy.config import ConfigParser
 
 from aiventure.utils.settings import Settings
 from aiventure.uix.menu import MenuScreen
@@ -26,10 +27,12 @@ class AiventureApp(KivyApp):
 	def build_config(self, config) -> None:
 		"""
 		"""
-		config.setdefaults('general', {
+		self.config = config = ConfigParser()
+		self.config.read('config.ini')
+		self.config.setdefaults('general', {
 			'userdir':'user'
 		})
-		config.setdefaults('ai', {
+		self.config.setdefaults('ai', {
 			'model':'gpt2-xl',
 			'timeout': 20.0,
 			'memory': 20,
@@ -40,7 +43,7 @@ class AiventureApp(KivyApp):
 			'top_p': 0.9,
 			'rep_pen': 1.1
 		})
-		config.setdefaults('modules', {
+		self.config.setdefaults('modules', {
 			'input_filters':'aiventure:filters',
 			'output_filters':'aiventure:filters',
 			'display_filter':'aiventure:filters'

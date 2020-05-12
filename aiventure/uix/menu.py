@@ -13,6 +13,7 @@ from kivy.properties import BooleanProperty
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.recycleview.layout import LayoutSelectionBehavior
+from kivy.uix.settings import SettingsWithTabbedPanel
 
 from aiventure.utils import init_widget
 from aiventure.ai.ai import AI
@@ -70,6 +71,15 @@ class MenuScreen(Screen):
         self.app = App.get_running_app()
         self.savefiles = {}
         self.selected_savefile = None
+        self.init_settings()
+
+    def init_settings(self):
+        settings = SettingsWithTabbedPanel()
+        # this is to remove the unecessary close button
+        settings.children[0].remove_widget(settings.children[0].children[0])
+        print(settings.children[0].children)
+        settings.add_json_panel('AI', self.app.config, 'aiventure/uix/settings/ai.json')
+        self.ids.tab_settings.add_widget(settings)
 
     def on_enter(self):
         self.app.adventure = Adventure()

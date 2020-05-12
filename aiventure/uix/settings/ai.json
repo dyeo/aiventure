@@ -1,0 +1,51 @@
+[
+	{
+        "type": "numeric",
+        "title": "Timeout",
+        "desc": "How long to wait for the AI to respond before timing out.\n(default=20)",
+        "section": "ai",
+        "key": "timeout"
+    },
+	{
+        "type": "numeric",
+        "title": "Memory",
+        "desc": "How many actions and results the AI can remember.\n(default=20)",
+        "section": "ai",
+        "key": "memory"
+    },
+	{
+        "type": "numeric",
+        "title": "Generation Length",
+        "desc": "The upper limit of words the AI will generate per action.\n(default=60)",
+        "section": "ai",
+        "key": "gen_length"
+    },
+	{
+        "type": "numeric",
+        "title": "Temperature",
+        "desc": "Lower temperatures make the AI more picky, higher make the AI more sporadic.\n(default=0.8)",
+        "section": "ai",
+        "key": "temperature"
+    },
+	{
+        "type": "numeric",
+        "title": "Top K Value",
+        "desc": "(default=0.8)",
+        "section": "ai",
+        "key": "top_k"
+    },
+	{
+        "type": "numeric",
+        "title": "Top P Value",
+        "desc": "(default=0.8)",
+        "section": "ai",
+        "key": "top_p"
+    },
+	{
+        "type": "numeric",
+        "title": "Repetition Penalty",
+        "desc": "1 is no penalty, <1 makes it more likely to repeat, >1 makes it less likely to repeat.\n(default=1.1)",
+        "section": "ai",
+        "key": "rep_pen"
+    }
+]

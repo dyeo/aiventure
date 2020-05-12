@@ -29,6 +29,7 @@
         
         # AI MODEL TAB
         TabbedPanelItem:
+            id: tab_model
             text:'AI Model'
 
             BoxLayout:
@@ -56,6 +57,7 @@
 
         # NEW GAME TAB
         TabbedPanelItem:
+            id: tab_new
             text:'New Game'
 
             BoxLayout:
@@ -113,6 +115,7 @@
         
         # LOAD GAME TAB
         TabbedPanelItem:
+            id: tab_load
             text:'Load Game'
 
             BoxLayout:
@@ -133,14 +136,12 @@
 
         # SETTINGS TAB
         TabbedPanelItem:
-            text:'Settings'
-
-            BoxLayout:
-                padding: (4,4)
-                orientation: 'vertical'
-        
+            id: tab_settings
+            text:'Settings'            
+            
         # MODULES TAB
         TabbedPanelItem:
+            id: tab_modules
             text:'Modules'
 
             BoxLayout:
