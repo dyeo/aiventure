@@ -26,10 +26,10 @@ else:
         def generate(self, input: str) -> str:
             return self.ai.generate(
                 input,            
-                length=self.app.settings.get('ai','gen_length'),
-                batch_size=self.app.settings.get('ai','batch_size'),
-                temperature=self.app.settings.get('ai','temperature'),
-                top_k=self.app.settings.get('ai','top_k'),
-                top_p=self.app.settings.get('ai','top_p'),
-                rep_pen=self.app.settings.get('ai','rep_pen'),
+                length=self.app.config.getint('ai','gen_length'),
+                batch_size=self.app.config.getint('ai','batch_size'),
+                temperature=self.app.config.getfloat('ai','temperature'),
+                top_k=self.app.config.getint('ai','top_k'),
+                top_p=self.app.config.getfloat('ai','top_p'),
+                rep_pen=self.app.config.getfloat('ai','rep_pen'),
             )

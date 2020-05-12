@@ -1,4 +1,5 @@
 import os
+import json
 import threading
 
 from kivy.logger import Logger
@@ -12,6 +13,7 @@ from kivy.properties import BooleanProperty
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.behaviors import FocusBehavior
 from kivy.uix.recycleview.layout import LayoutSelectionBehavior
+from kivy.uix.settings import SettingsWithTabbedPanel
 
 from aiventure.utils import init_widget
 from aiventure.ai.ai import AI
@@ -43,27 +45,57 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
         if super(SelectableLabel, self).on_touch_down(touch):
             return True
         if self.collide_point(*touch.pos) and self.selectable:
-            return self.parent.select_with_touch(self.index, touch)
+            return self.parent.select_with_touch(self.index, touch)  
 
     def apply_selection(self, rv, index, is_selected):
         ''' Respond to the selection of items in the view. '''
-        is_reselected = self.selected == is_selected
         self.selected = is_selected
-        if is_selected and not is_reselected:
-            self.screen.on_model_selected(self.parent.parent.data[index]['text'])
+
+
+class SelectableModelLabel(SelectableLabel):
+    def apply_selection(self, rv, index, is_selected):
+        super(SelectableModelLabel, self).apply_selection(rv,index,is_selected)
+        self.screen.on_model_selected(self.text)
+
+
+class SelectableGameLabel(SelectableLabel):
+    def apply_selection(self, rv, index, is_selected):
+        super(SelectableGameLabel, self).apply_selection(rv,index,is_selected)
+        self.screen.on_game_selected(self.text)
+
 
 class MenuScreen(Screen):
     
     def __init__(self, **kw):
         super().__init__(**kw)
         self.app = App.get_running_app()
+        self.savefiles = {}
+        self.selected_savefile = None
+        self.init_settings()
+
+    def init_settings(self):
+        settings = SettingsWithTabbedPanel()
+        # this is to remove the unecessary close button
+        settings.children[0].remove_widget(settings.children[0].children[0])
+        settings.add_json_panel('General', self.app.config, 'aiventure/uix/settings/general.json')
+        settings.add_json_panel('AI', self.app.config, 'aiventure/uix/settings/ai.json')
+        self.ids.tab_settings.add_widget(settings)
 
     def on_enter(self):
         self.app.adventure = Adventure()
-        self.ids.view_model.data = [{'text': str(m)} for m in self.get_module_directories()]
+        self.init_models()
+        self.init_saves()
         self.update_button_start_new()
+        self.update_button_start_load()
+
+    def on_update(self):
+        self.update_button_start_new()
+        self.update_button_start_load()
     
     # AI MODEL TAB
+
+    def init_models(self):        
+        self.ids.view_model.data = [{'text': str(m)} for m in self.get_module_directories()]
 
     def get_module_directories(self) -> list:
         return [m.name for m in os.scandir(self.app.get_user_path('models')) if self.model_is_valid(m.path)]
@@ -77,7 +109,7 @@ class MenuScreen(Screen):
         threading.Thread(target=self._load_ai_thread).start()
         
     def on_model_selected(self, model):
-        self.app.settings['ai']['model'] = model
+        self.app.config.set('ai','model', model)
         self.ids.button_load_model.disabled = False
 
     def _load_ai_thread(self):
@@ -87,16 +119,19 @@ class MenuScreen(Screen):
         try:
             self.ids.label_model.text = f'Loading Model "{model_name}"'
             Logger.info(f'AI: Loading model at "{model_path}"')
+            self.app.generator = None
             self.app.generator = LocalGenerator(AI(model_path))
             Logger.info(f'AI: Model loaded at "{model_path}"')
         except Exception as e:
             self.ids.label_model.text = f'Error Loading Model "{model_name}"'
         else:
             self.ids.label_model.text = f'Loaded Model: {model_name} ({self.app.generator.ai.model_info})'
+            self.on_update()
 
     # NEW GAME TAB
 
     def on_start_new(self):
+        self.app.adventure.name = self.ids.input_name.text
         self.app.adventure.context = self.ids.input_context.text
         self.app.adventure.actions.append(self.ids.input_prompt.text)
         self.app.sm.current = 'play'
@@ -112,4 +147,33 @@ class MenuScreen(Screen):
         else:
             self.ids.button_start_new.text = 'Please Load Model to Start'
             self.ids.button_start_new.disabled = True
+    
+    # LOAD GAME TAB
+    
+    def init_saves(self):
+        paths = [s.path for s in os.scandir(self.app.get_user_path('adventures')) if s.path.endswith('.json')]
+        for p in paths:
+            with open(p, 'r') as json_file:
+                data = json.load(json_file)
+                self.savefiles[data['name']] = data        
+        self.ids.view_game.data = [{'text': str(s)} for s in self.savefiles.keys()]
+
+    def on_game_selected(self, game):
+        self.selected_savefile = game
+
+    def on_start_load(self):
+        self.app.adventure.from_dict(self.savefiles[self.selected_savefile])
+        self.app.sm.current = 'play'
+
+    def update_button_start_load(self):        
+        if self.app.generator:
+            if self.selected_savefile:
+                self.ids.button_start_load.text = 'Start Adventure'
+                self.ids.button_start_load.disabled = False
+            else:
+                self.ids.button_start_load.text = 'Select a Save File'
+                self.ids.button_start_load.disabled = True
+        else:
+            self.ids.button_start_load.text = 'Please Load Model to Start'
+            self.ids.button_start_load.disabled = True
 

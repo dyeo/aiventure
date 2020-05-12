@@ -7,6 +7,20 @@
             pos: self.pos
             size: self.size
 
+
+<SelectionView@RecycleView>:
+
+    SelectableRecycleBoxLayout:
+        spacing: 4
+        default_size: (None, dp(32))
+        default_size_hint: (1,None)
+        size_hint: (1,None)
+        height: self.minimum_height
+        orientation: 'vertical'
+        multiselect: False
+        touch_multiselect: False
+
+
 <MenuScreen>:
     padding: (4,4)
 
@@ -15,25 +29,16 @@
         
         # AI MODEL TAB
         TabbedPanelItem:
+            id: tab_model
             text:'AI Model'
 
             BoxLayout:
                 padding: (4,4)
                 orientation: 'vertical'
 
-                RecycleView:
+                SelectionView:
                     id: view_model
-                    viewclass: 'SelectableLabel'
-
-                    SelectableRecycleBoxLayout:
-                        spacing: 4
-                        default_size: (None, dp(32))
-                        default_size_hint: (1,None)
-                        size_hint: (1,None)
-                        height: self.minimum_height
-                        orientation: 'vertical'
-                        multiselect: False
-                        touch_multiselect: False
+                    viewclass: 'SelectableModelLabel'
 
                 Label:
                     id: label_model
@@ -52,6 +57,7 @@
 
         # NEW GAME TAB
         TabbedPanelItem:
+            id: tab_new
             text:'New Game'
 
             BoxLayout:
@@ -109,22 +115,33 @@
         
         # LOAD GAME TAB
         TabbedPanelItem:
+            id: tab_load
             text:'Load Game'
 
             BoxLayout:
                 padding: (4,4)
                 orientation: 'vertical'
+                
+                SelectionView:
+                    id: view_game
+                    viewclass: 'SelectableGameLabel'
+                    
+                Button:
+                    id: button_start_load
+                    text:'Load Aventure'
+                    on_release: root.on_start_load()
+                    size_hint:(1,None)
+                    height:32
+                    disabled:True
 
         # SETTINGS TAB
         TabbedPanelItem:
-            text:'Settings'
-
-            BoxLayout:
-                padding: (4,4)
-                orientation: 'vertical'
-        
+            id: tab_settings
+            text:'Settings'            
+            
         # MODULES TAB
         TabbedPanelItem:
+            id: tab_modules
             text:'Modules'
 
             BoxLayout:

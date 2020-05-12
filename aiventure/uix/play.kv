@@ -1,6 +1,6 @@
 #:import Factory kivy.factory.Factory
 
-<MenuPopup@Popup>:
+<MenuPopup>:
 	title: 'Menu'
 	size_hint: (0.4,0.667)
 	auto_dismiss: False
@@ -25,6 +25,24 @@
 			text: 'Quit to Main Menu'
 			on_release: root.on_quit()
 
+
+<ErrorPopup>
+	title: 'Woops!'
+	size_hint: (0.4, 0.4)
+	auto_dismiss: False
+	BoxLayout:
+		Label:
+			id: error_text
+			text: ''
+			halign: 'center'
+			valign: 'middle'
+		Button:
+			text: 'Ok'
+			on_release: root.dismiss()
+			size_hint: (1,None)
+			height: 32
+			
+
 <PlayScreen>:
 
 	BoxLayout:
@@ -32,13 +50,19 @@
 		padding: (4,4)
 		spacing: 4
 
+		Label:
+			id: title_text
+			size_hint: (1,None)
+			height: 32
+
 		ScrollView:
 			id: scroll_input
 			do_scroll_y: True
 
 			Label:
-				id: output
+				id: output_text
 				text: ''
+				markup: True
 				size_hint_y: None
 				text_size: self.width, None
 				height: self.texture_size[1]
@@ -56,8 +80,8 @@
 			Button:
 				id: button_send
 				text: 'Send'
-				size_hint: (1.0/6.0, 1)
 				on_release: root.on_send()
+				size_hint: (1.0/6.0, 1)
 
 		GridLayout:
 			id: group_bottom
@@ -68,7 +92,7 @@
 
 			Button:
 				id: button_menu
-				disabled: False
+				disabled: True
 				text: 'Menu'
 				on_release: Factory.MenuPopup().open()
 			

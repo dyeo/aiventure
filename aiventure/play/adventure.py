@@ -7,9 +7,11 @@ from aiventure.ai.generator import Generator
 class Adventure(object):
     def __init__(
             self,
+            name: str = None,
             context: str = None,
             memory: int = 20
     ):
+        self.name = name
         self.context = context
         self.memory = memory
         self.actions = []
@@ -17,6 +19,7 @@ class Adventure(object):
 
     def to_dict(self) -> dict:
         result = {}
+        result['name'] = self.name
         result['context'] = self.context
         result['memory'] = self.memory
         result['actions'] = self.actions
@@ -24,6 +27,7 @@ class Adventure(object):
         return result
 
     def from_dict(self, d):
+        self.name = d['name']
         self.context = d['context'] 
         self.memory = d['memory']  
         self.actions = d['actions'] 

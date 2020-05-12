@@ -1,0 +1,2 @@
+class StopThreadException(BaseException):
+    pass
