@@ -13,7 +13,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 
-from aiventure.utils import *
+from aiventure.utils import init_widget
 from aiventure.utils.threading import StopThreadException
 from aiventure.play.adventure import Adventure
 
@@ -26,16 +26,12 @@ class MenuPopup(Popup):
         init_widget(self)
 
     def on_save(self) -> None:
-        savefile = get_save_name(self.app.adventure.name)
-        with open(self.app.get_user_path('adventures',f'{savefile}.json'), 'w') as json_file:
-            json.dump(self.app.adventure.to_dict(), json_file)
+        self.app.save_adventure()
         self.screen.update_display()
         self.dismiss()
         
     def on_load(self) -> None:
-        savefile = get_save_name(self.app.adventure.name)
-        with open(self.app.get_user_path('adventures',f'{savefile}.json'), 'r') as json_file:
-            self.app.adventure.from_dict(json.load(json_file))
+        self.app.load_adventure()
         self.screen.update_display()
         self.dismiss()
 
@@ -91,6 +87,7 @@ class PlayScreen(Screen):
         except Exception:
             Logger.error(f"AI: {traceback.format_exc()}")
         self.update_display()
+        self.try_autosave()
         self.ids.input.disabled = False
         self.ids.button_send.disabled = False
 
@@ -107,6 +104,9 @@ class PlayScreen(Screen):
             popup.ids.error_text.text = 'The AI took too long to respond.\nPlease try something else.'
             popup.open()
 
+    def try_autosave(self) -> None:
+        if self.app.config.getboolean('general','autosave'):
+            self.app.save_adventure()
 
     # BOTTOM MENU
     
@@ -124,6 +124,7 @@ class PlayScreen(Screen):
         self.app.adventure.actions = self.app.adventure.actions[:-1]
         self.app.adventure.results = self.app.adventure.results[:-1]
         self.update_display()
+        self.try_autosave()
     
     def on_retry(self) -> None:
         action = self.app.adventure.actions[-1]

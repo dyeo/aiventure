@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import importlib
 
 from kivy.logger import Logger
@@ -8,6 +9,7 @@ from kivy.uix.screenmanager import ScreenManager
 from kivy.lang.builder import Builder
 from kivy.config import ConfigParser
 
+from aiventure.utils import get_save_name
 from aiventure.utils.settings import Settings
 from aiventure.uix.menu import MenuScreen
 from aiventure.uix.play import PlayScreen
@@ -30,7 +32,8 @@ class AiventureApp(KivyApp):
 		self.config = config = ConfigParser()
 		self.config.read('config.ini')
 		self.config.setdefaults('general', {
-			'userdir':'user'
+			'userdir':'user',
+			'autosave':True
 		})
 		self.config.setdefaults('ai', {
 			'model':'gpt2-xl',
@@ -48,6 +51,7 @@ class AiventureApp(KivyApp):
 			'output_filters':'aiventure:filters',
 			'display_filter':'aiventure:filters'
 		})
+		self.config.write()
 
 	def init_ai(self) -> None:
 		"""
@@ -120,3 +124,15 @@ class AiventureApp(KivyApp):
 	def load_submodule(self, domain: str, module: str, submodule: str) -> str:
 		m = self.load_module(domain, module)
 		return getattr(m, submodule)
+
+	# SAVING AND LOADING
+
+	def save_adventure(self):
+		savefile = get_save_name(self.adventure.name)
+		with open(self.get_user_path('adventures',f'{savefile}.json'), 'w') as json_file:
+			json.dump(self.adventure.to_dict(), json_file)
+				
+	def load_adventure(self):
+		savefile = get_save_name(self.adventure.name)
+		with open(self.get_user_path('adventures',f'{savefile}.json'), 'r') as json_file:
+			self.adventure.from_dict(json.load(json_file))

@@ -77,7 +77,7 @@ class MenuScreen(Screen):
         settings = SettingsWithTabbedPanel()
         # this is to remove the unecessary close button
         settings.children[0].remove_widget(settings.children[0].children[0])
-        print(settings.children[0].children)
+        settings.add_json_panel('General', self.app.config, 'aiventure/uix/settings/general.json')
         settings.add_json_panel('AI', self.app.config, 'aiventure/uix/settings/ai.json')
         self.ids.tab_settings.add_widget(settings)
 
