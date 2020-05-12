@@ -36,13 +36,16 @@ def filter_display(story: list) -> str:
     """
     result = ''
     for i in range(0, len(story)):
+        is_action = ((i+1) % 2) == 0
         h = i - 1
+        story_elem = story[i].strip()
+        story_elem = f'[color=#ffff00]{story_elem}[/color]' if is_action else story_elem
         if h < 0:
-            result += story[i]
+            result += story_elem
         else:
             end = find_last_sentence_end(story[h])
             if end == len(story[h]):
-                result += '\n\n' + story[i]
+                result += '\n\n' + story_elem
             else:
-                result += ' ' + story[i]
+                result += ' ' + story_elem
     return result

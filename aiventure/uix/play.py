@@ -1,3 +1,5 @@
+import re
+import time
 import json
 import threading
 import traceback
@@ -9,6 +11,9 @@ from kivy.uix.popup import Popup
 
 from aiventure.utils import *
 from aiventure.play.adventure import Adventure
+
+re_tag_start = r'\[[^/\[\]]+\]'
+re_tag_end = r'\[/[^\[\]]+\]'
 
 class MenuPopup(Popup):
     def __init__(self, **kargs):
@@ -89,7 +94,7 @@ class PlayScreen(Screen):
         action = self.app.adventure.actions[-1]
         self.app.adventure.actions = self.app.adventure.actions[:-1]
         self.app.adventure.results = self.app.adventure.results[:-1]
-        threading.Thread(target=self._on_send_thread, args=(action,)).start()
+        self.on_send(action)
 
     def on_context(self) -> None:
         if self.mode == 'c':
@@ -119,9 +124,6 @@ class PlayScreen(Screen):
 
     def update_display(self, scroll: bool=True) -> None:
         self.ids.title_text.text = self.app.adventure.name
-        self.ids.output.text = self.filter_display(self.app.adventure.full_story)
-        if scroll:
-            self.ids.scroll_input.scroll_y = 0
         if self.mode == 'a':
             self.enable_bottom_buttons([self.ids.button_alter])
         elif self.mode == 'c':
@@ -133,6 +135,36 @@ class PlayScreen(Screen):
             buttons += [self.ids.button_revert] if len_results > 0 else []
             buttons += [self.ids.button_retry] if len_results > 0 else []
             self.enable_bottom_buttons(buttons)
+        if scroll:
+            self.ids.scroll_input.scroll_y = 0
+        threading.Thread(target=self.update_output).start()
+
+    def update_output(self) -> None:
+        prev_text = self.ids.output.text
+        next_text = self.filter_display(self.app.adventure.full_story)
+        if len(next_text) > len(prev_text):
+            end_tags = []
+            i = 0
+            while i in range(len(prev_text), len(next_text)):           
+                raw_show = next_text[:i+1]
+                raw_hide = next_text[i+1:]                    
+                start_match = re.match(re_tag_start, raw_hide)
+                end_match = re.match(re_tag_end, raw_hide)                    
+                result = raw_show
+                for e in reversed(end_tags):
+                    result += e                    
+                if start_match:
+                    i += len(start_match.group(0))
+                    end_tag = re.findall(re_tag_end, raw_hide)[-len(end_tags)-1]
+                    end_tags.append(end_tag)                        
+                if end_match:
+                    i += len(end_match.group(0))
+                    del end_tags[-1]                        
+                self.ids.output.text = result                    
+                i += 1
+                time.sleep(0.0333)
+        self.ids.output.text = next_text
+        print('end')
 
     def enable_bottom_buttons(self, buttons: list) -> None:
         for b in self.ids.group_bottom.children:

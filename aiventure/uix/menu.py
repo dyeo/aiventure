@@ -45,26 +45,22 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
             return True
         if self.collide_point(*touch.pos) and self.selectable:
             return self.parent.select_with_touch(self.index, touch)  
-      
+
     def apply_selection(self, rv, index, is_selected):
         ''' Respond to the selection of items in the view. '''
-        pass
+        self.selected = is_selected
 
 
 class SelectableModelLabel(SelectableLabel):
     def apply_selection(self, rv, index, is_selected):
-        is_reselected = self.selected == is_selected
-        self.selected = is_selected
-        if is_selected and not is_reselected:
-            self.screen.on_model_selected(self.parent.parent.data[index]['text'])
+        super(SelectableModelLabel, self).apply_selection(rv,index,is_selected)
+        self.screen.on_model_selected(self.text)
 
 
 class SelectableGameLabel(SelectableLabel):
     def apply_selection(self, rv, index, is_selected):
-        is_reselected = self.selected == is_selected
-        self.selected = is_selected
-        if is_selected and not is_reselected:
-            self.screen.on_game_selected(self.parent.parent.data[index]['text'])
+        super(SelectableGameLabel, self).apply_selection(rv,index,is_selected)
+        self.screen.on_game_selected(self.text)
 
 
 class MenuScreen(Screen):
@@ -99,7 +95,7 @@ class MenuScreen(Screen):
         threading.Thread(target=self._load_ai_thread).start()
         
     def on_model_selected(self, model):
-        self.app.settings['ai']['model'] = model
+        self.app.config.set('ai','model', model)
         self.ids.button_load_model.disabled = False
 
     def _load_ai_thread(self):

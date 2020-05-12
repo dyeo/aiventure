@@ -1,4 +1,4 @@
-from aiventure import App
+from aiventure import AiventureApp
 
 if __name__ == "__main__":
-    App().run()
+    AiventureApp().run()
