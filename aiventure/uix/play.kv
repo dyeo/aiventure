@@ -27,15 +27,19 @@
 
 
 <ErrorPopup>
+
 	title: 'Woops!'
 	size_hint: (0.4, 0.4)
 	auto_dismiss: False
+
 	BoxLayout:
+
 		Label:
 			id: error_text
 			text: ''
 			halign: 'center'
 			valign: 'middle'
+
 		Button:
 			text: 'Ok'
 			on_release: root.dismiss()
@@ -81,7 +85,7 @@
 				id: button_send
 				text: 'Send'
 				on_release: root.on_send()
-				size_hint: (1.0/6.0, 1)
+		        size_hint: (1.0/6.0, 1)
 
 		GridLayout:
 			id: group_bottom
@@ -97,18 +101,6 @@
 				on_release: Factory.MenuPopup().open()
 			
 			Button:
-				id: button_context
-				disabled: True
-				text: 'Context'
-				on_release: root.on_context()
-			
-			Button:
-				id: button_alter
-				disabled: True
-				text: 'Alter'
-				on_release: root.on_alter()
-			
-			Button:
 				id: button_revert
 				disabled: True
 				text: 'Revert'
@@ -119,3 +111,18 @@
 				disabled: True
 				text: 'Retry'
 				on_release: root.on_retry()
+
+            Button:
+				id: button_memory
+				text: 'Memory'
+				on_release: root.on_memory()
+
+			Button:
+				id: button_altergen
+				text: 'Altergen'
+				on_release: root.on_altergen()
+
+			Button:
+				id: button_cancel
+				text: 'Cancel'
+				on_release: root.on_cancel()

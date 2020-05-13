@@ -1,24 +1,23 @@
-import os
 import json
+import os
 import threading
 
-from kivy.logger import Logger
 from kivy.app import App
-from kivy.lang import Builder
-from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.recycleview import RecycleView
-from kivy.uix.recycleview.views import RecycleDataViewBehavior
-from kivy.uix.label import Label
+from kivy.logger import Logger
 from kivy.properties import BooleanProperty
-from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.behaviors import FocusBehavior
+from kivy.uix.label import Label
+from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview.layout import LayoutSelectionBehavior
+from kivy.uix.recycleview.views import RecycleDataViewBehavior
+from kivy.uix.screenmanager import Screen
 from kivy.uix.settings import SettingsWithTabbedPanel
 
-from aiventure.utils import init_widget
 from aiventure.ai.ai import AI
 from aiventure.ai.generator import LocalGenerator
 from aiventure.play.adventure import Adventure
+from aiventure.utils import init_widget
+
 
 class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
                                  RecycleBoxLayout):
@@ -45,7 +44,7 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
         if super(SelectableLabel, self).on_touch_down(touch):
             return True
         if self.collide_point(*touch.pos) and self.selectable:
-            return self.parent.select_with_touch(self.index, touch)  
+            return self.parent.select_with_touch(self.index, touch)
 
     def apply_selection(self, rv, index, is_selected):
         ''' Respond to the selection of items in the view. '''
@@ -54,18 +53,18 @@ class SelectableLabel(RecycleDataViewBehavior, Label):
 
 class SelectableModelLabel(SelectableLabel):
     def apply_selection(self, rv, index, is_selected):
-        super(SelectableModelLabel, self).apply_selection(rv,index,is_selected)
+        super(SelectableModelLabel, self).apply_selection(rv, index, is_selected)
         self.screen.on_model_selected(self.text)
 
 
 class SelectableGameLabel(SelectableLabel):
     def apply_selection(self, rv, index, is_selected):
-        super(SelectableGameLabel, self).apply_selection(rv,index,is_selected)
+        super(SelectableGameLabel, self).apply_selection(rv, index, is_selected)
         self.screen.on_game_selected(self.text)
 
 
 class MenuScreen(Screen):
-    
+
     def __init__(self, **kw):
         super().__init__(**kw)
         self.app = App.get_running_app()
@@ -91,10 +90,10 @@ class MenuScreen(Screen):
     def on_update(self):
         self.update_button_start_new()
         self.update_button_start_load()
-    
+
     # AI MODEL TAB
 
-    def init_models(self):        
+    def init_models(self):
         self.ids.view_model.data = [{'text': str(m)} for m in self.get_module_directories()]
 
     def get_module_directories(self) -> list:
@@ -102,14 +101,14 @@ class MenuScreen(Screen):
 
     def model_is_valid(self, modelpath) -> bool:
         return os.path.isfile(os.path.join(modelpath, 'pytorch_model.bin')) \
-            and os.path.isfile(os.path.join(modelpath, 'config.json')) \
-            and os.path.isfile(os.path.join(modelpath, 'vocab.json'))
+               and os.path.isfile(os.path.join(modelpath, 'config.json')) \
+               and os.path.isfile(os.path.join(modelpath, 'vocab.json'))
 
     def load_ai(self):
         threading.Thread(target=self._load_ai_thread).start()
-        
+
     def on_model_selected(self, model):
-        self.app.config.set('ai','model', model)
+        self.app.config.set('ai', 'model', model)
         self.ids.button_load_model.disabled = False
 
     def _load_ai_thread(self):
@@ -140,22 +139,22 @@ class MenuScreen(Screen):
         if self.app.generator:
             self.ids.button_start_new.text = 'Start Adventure'
             self.ids.button_start_new.disabled = not (
-                self.ids.input_name.text.strip() and \
-                self.ids.input_context.text.strip() and \
-                self.ids.input_prompt.text.strip() \
-            )
+                    self.ids.input_name.text.strip() and \
+                    self.ids.input_context.text.strip() and \
+                    self.ids.input_prompt.text.strip() \
+                )
         else:
             self.ids.button_start_new.text = 'Please Load Model to Start'
             self.ids.button_start_new.disabled = True
-    
+
     # LOAD GAME TAB
-    
+
     def init_saves(self):
         paths = [s.path for s in os.scandir(self.app.get_user_path('adventures')) if s.path.endswith('.json')]
         for p in paths:
             with open(p, 'r') as json_file:
                 data = json.load(json_file)
-                self.savefiles[data['name']] = data        
+                self.savefiles[data['name']] = data
         self.ids.view_game.data = [{'text': str(s)} for s in self.savefiles.keys()]
 
     def on_game_selected(self, game):
@@ -165,7 +164,7 @@ class MenuScreen(Screen):
         self.app.adventure.from_dict(self.savefiles[self.selected_savefile])
         self.app.sm.current = 'play'
 
-    def update_button_start_load(self):        
+    def update_button_start_load(self):
         if self.app.generator:
             if self.selected_savefile:
                 self.ids.button_start_load.text = 'Start Adventure'
@@ -176,4 +175,3 @@ class MenuScreen(Screen):
         else:
             self.ids.button_start_load.text = 'Please Load Model to Start'
             self.ids.button_start_load.disabled = True
-

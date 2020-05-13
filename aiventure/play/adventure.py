@@ -39,8 +39,7 @@ class Adventure(object):
         The user actions and AI results in chronological order, not including the story context.
         :return: A list of action and result strings, interspersed, starting with the first action.
         """
-        res = [s for p in zip(self.actions, self.results) for s in p]
-        return [s for s in res if s and len(s.strip()) > 0]
+        return [s for p in zip(self.actions, self.results) for s in p]
 
     @property
     def full_story(self) -> list:
