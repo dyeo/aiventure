@@ -104,7 +104,7 @@ class PlayScreen(Screen):
             Logger.error(f"AI: {traceback.format_exc()}")
         prev_mode = self.mode
         self.mode = ''
-        self.on_update(scroll=(prev_mode == ')'), clear_input=True)
+        self.on_update(scroll=(prev_mode == ''), clear_input=True)
         self.try_autosave()
         self.ids.input.disabled = False
         self.ids.button_send.disabled = False
