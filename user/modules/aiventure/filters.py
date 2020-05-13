@@ -44,7 +44,7 @@ def filter_display(story: list) -> str:
         ref = 'c'
         if i > 0:
             ref = 'a' if is_action else 'r'
-            ref += str(int((i-1)/2))
+            ref += str(i-1)
         story_elem = f'[ref={ref}]{story_elem}[/ref]'
         story_elem = f'[color=#ffff00]{story_elem}[/color]' if is_action else story_elem
         if h < 0:

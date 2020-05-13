@@ -57,14 +57,17 @@ class Adventure(object):
         """
         return ([self.context] if self.context else []) + self.story[-self.memory:]
     
-    def get_result(self, generator: Generator, action: str, record: bool = True) -> str:
+    def get_result(self, generator: Generator, action: str, record: bool = True, start=0, end=0) -> str:
         """
         Gets a raw result from the AI, taking into account the existing story.
+        :param generator:
         :param action: The action the user has submitted to the AI.
         :param record: Should the result be recorded to the story?
+        :param start:
+        :param end:
         :return: An acceptable result from the AI.
         """
-        temp_story = self.remembered_story
+        temp_story = self.remembered_story[start:end]
         if action:
             temp_story += [action]
         temp_story = ' '.join(temp_story) + ' '

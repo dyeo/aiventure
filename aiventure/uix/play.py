@@ -1,8 +1,7 @@
 import re
-import threading
 import time
 import traceback
-from typing import *
+import threading
 
 from func_timeout import func_timeout, FunctionTimedOut
 from func_timeout.StoppableThread import StoppableThread
@@ -51,6 +50,7 @@ class PlayScreen(Screen):
         self.app = App.get_running_app()
         self.mode: str = ''
         self.edit_index: int = 0
+        self.altergen = False
         self.ids.output_text.bind(on_ref_press=self.on_entry_selected)
 
     def on_enter(self) -> None:
@@ -69,6 +69,8 @@ class PlayScreen(Screen):
             if len(self.app.adventure.results) > 0:
                 buttons += [self.ids.button_revert]
                 buttons += [self.ids.button_retry]
+        else:
+            buttons += [self.ids.button_altergen]
         self.enable_bottom_buttons(buttons)
         # optionally clear input text
         if clear_input:
@@ -110,30 +112,42 @@ class PlayScreen(Screen):
         self.ids.button_send.disabled = False
 
     def _select_send(self, text) -> None:
+        i = int(self.edit_index/2)
         if self.mode == '':
-            try:
-                result = func_timeout(
-                    self.app.config.getfloat('ai', 'timeout'),
-                    self.app.adventure.get_result,
-                    args=(self.app.generator, text),
-                )
-                self.app.adventure.results[-1] = self.filter_output(result)
-            except FunctionTimedOut:
-                popup = ErrorPopup()
-                popup.ids.error_text.text = 'The AI took too long to respond.\nPlease try something else.'
-                popup.open()
+            self.app.adventure.results[-1] = \
+                self._generate(text)
         elif self.mode == 'c':
-            self.app.adventure.context = text
+            self.app.adventure.context = \
+                self._generate(text, record=False, end=i) \
+                if self.altergen else text
         elif self.mode == 'a':
-            self.app.adventure.actions[self.edit_index] = text
+            self.app.adventure.actions[self.edit_index] = \
+                self._generate(text, record=False, end=i) \
+                if self.altergen else text
         elif self.mode == 'r':
-            self.app.adventure.results[self.edit_index] = text
+            self.app.adventure.results[self.edit_index] = \
+                self._generate(text, record=False, end=i) \
+                if self.altergen else text
+
+    def _generate(self, text, record=True, start=0, end=0) -> str:
+        try:
+            result = func_timeout(
+                self.app.config.getfloat('ai', 'timeout'),
+                self.app.adventure.get_result,
+                args=(self.app.generator, text, record, start, end),
+            )
+            return self.filter_output(result)
+        except FunctionTimedOut:
+            popup = ErrorPopup()
+            popup.ids.error_text.text = 'The AI took too long to respond.\nPlease try something else.'
+            popup.open()
+        return None
 
     def on_entry_selected(self, label, value):
         match = re.match(r'([a-z])([0-9]+)?', value)
         self.mode = match.group(1)
         if match.group(2):
-            self.edit_index = int(match.group(2))
+            self.edit_index = int(int(match.group(2))/2)
         if self.mode == 'c':
             self.ids.input.text = self.app.adventure.context
         elif self.mode == 'a':
@@ -164,7 +178,8 @@ class PlayScreen(Screen):
         pass
 
     def on_altergen(self) -> None:
-        pass
+        self.altergen = True
+        self.on_send()
 
     def on_cancel(self) -> None:
         self.mode = ''
