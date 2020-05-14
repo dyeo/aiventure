@@ -41,7 +41,7 @@
                     viewclass: 'SelectableModelLabel'
 
                 Label:
-                    id: label_model
+                    id: status_text_model
                     text: 'No Model Loaded'
                     size_hint:(1,None)
                     height:32
@@ -106,6 +106,12 @@
                     multiline: True
                     do_scroll_y: True
 
+                Label:
+                    id: status_text_new
+                    text: 'No Model Loaded'
+                    size_hint:(1,None)
+                    height:32
+
                 Button:
                     id: button_start_new
                     text: 'Start Adventure'
@@ -126,6 +132,12 @@
                 SelectionView:
                     id: view_game
                     viewclass: 'SelectableGameLabel'
+
+                Label:
+                    id: status_text_load
+                    text: 'No Model Loaded'
+                    size_hint:(1,None)
+                    height:32
 
                 Button:
                     id: button_start_load

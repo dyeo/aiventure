@@ -54,7 +54,6 @@ class AiventureApp(KivyApp):
             'autosave': True
         })
         self.config.setdefaults('ai', {
-            'model': 'gpt2-xl',
             'timeout': 20.0,
             'memory': 20,
             'gen_length': 60,
@@ -110,12 +109,13 @@ class AiventureApp(KivyApp):
         """
         return os.path.join(self.config.get('general', 'userdir'), *args)
 
-    def get_model_path(self) -> str:
+    def get_model_path(self, model: str) -> str:
         """
         Gets the path to the currently selected (but not necessarily loaded) AI model.
+        :param model: The model within the models subdirectory.
         :return: The current selected model path.
         """
-        return self.get_user_path('models', self.config.get('ai', 'model'))
+        return self.get_user_path('models', model)
 
     def get_valid_models(self) -> List[str]:
         """

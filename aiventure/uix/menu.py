@@ -80,7 +80,8 @@ class SelectableModelLabel(SelectableLabel):
     """
     def apply_selection(self, rv, index, is_selected) -> None:
         super(SelectableModelLabel, self).apply_selection(rv, index, is_selected)
-        self.screen.on_model_selected(self.text)
+        if is_selected:
+            self.screen.on_model_selected(self.text)
 
 
 class SelectableGameLabel(SelectableLabel):
@@ -89,18 +90,20 @@ class SelectableGameLabel(SelectableLabel):
     """
     def apply_selection(self, rv, index, is_selected) -> None:
         super(SelectableGameLabel, self).apply_selection(rv, index, is_selected)
-        self.screen.on_game_selected(self.text)
+        if is_selected:
+            self.screen.on_game_selected(self.text)
 
 
 class MenuScreen(Screen):
     """
     The main menu screen.
     """
-    def __init__(self, **kw):
-        super().__init__(**kw)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         from aiventure import AiventureApp
         self.app: AiventureApp = App.get_running_app()
         self.savefiles: Dict[str, Dict[str, Any]] = {}
+        self.selected_model: Optional[str] = None
         self.selected_savefile: Optional[str] = None
         self.init_settings()
 
@@ -132,6 +135,11 @@ class MenuScreen(Screen):
         self.update_button_start_new()
         self.update_button_start_load()
 
+    def update_status_text(self, text: str) -> None:
+        self.ids.status_text_model.text = \
+            self.ids.status_text_new.text = \
+            self.ids.status_text_load.text = text
+
     """
     AI MODEL TAB
     """
@@ -154,27 +162,29 @@ class MenuScreen(Screen):
 
         :param model: The name of the model to select.
         """
-        self.app.config.set('ai', 'model', model)
+        self.selected_model = model
         self.ids.button_load_model.disabled = False
+        self.on_update()
 
     def _load_ai_thread(self) -> None:
         """
         Internal thread for loading an AI model so that the main thread isn't blocked.
         """
         self.ids.button_load_model.disabled = True
-        model_path = self.app.get_model_path()
+        model_path = self.app.get_model_path(self.selected_model)
         model_name = os.path.split(model_path)[-1]
         try:
-            self.ids.label_model.text = f'Loading Model "{model_name}"'
+            self.update_status_text(f'Loading Model "{model_name}"')
             Logger.info(f'AI: Loading model at "{model_path}"')
             self.app.ai = None
             self.app.ai = AI(model_path)
             Logger.info(f'AI: Model loaded at "{model_path}"')
         except Exception as e:
-            self.ids.label_model.text = f'Error Loading Model "{model_name}"'
+            self.app.ai = None
+            self.update_status_text(f'Error Loading Model "{model_name}"')
         else:
-            self.ids.label_model.text = f'Loaded Model: {model_name} ({self.app.ai.model_info})'
-            self.on_update()
+            self.update_status_text(f'Loaded Model: {model_name} ({self.app.ai.model_info})')
+        self.on_update()
 
     """   
     NEW GAME TAB
@@ -223,6 +233,7 @@ class MenuScreen(Screen):
         :param game: The name of the game to select.
         """
         self.selected_savefile = game
+        self.on_update()
 
     def on_start_load(self) -> None:
         """
