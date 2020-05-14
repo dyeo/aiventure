@@ -112,22 +112,17 @@ class PlayScreen(Screen):
         self.ids.button_send.disabled = False
 
     def _select_send(self, text) -> None:
-        i = int(self.edit_index/2)
+        if self.altergen:
+            text += ' ' + self._generate(text, record=False, end=int(self.edit_index/2))
+            self.altergen = False
         if self.mode == '':
-            self.app.adventure.results[-1] = \
-                self._generate(text)
+            self._generate(text)
         elif self.mode == 'c':
-            self.app.adventure.context = \
-                self._generate(text, record=False, end=i) \
-                if self.altergen else text
+            self.app.adventure.context = text
         elif self.mode == 'a':
-            self.app.adventure.actions[self.edit_index] = \
-                self._generate(text, record=False, end=i) \
-                if self.altergen else text
+            self.app.adventure.actions[self.edit_index] = text
         elif self.mode == 'r':
-            self.app.adventure.results[self.edit_index] = \
-                self._generate(text, record=False, end=i) \
-                if self.altergen else text
+            self.app.adventure.results[self.edit_index] = text
 
     def _generate(self, text, record=True, start=0, end=0) -> str:
         try:
