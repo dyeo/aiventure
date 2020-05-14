@@ -112,6 +112,7 @@
                     on_release: root.on_start_new()
                     size_hint: (1,None)
                     height:32
+                    disabled: True
         
         # LOAD GAME TAB
         TabbedPanelItem:
@@ -125,10 +126,10 @@
                 SelectionView:
                     id: view_game
                     viewclass: 'SelectableGameLabel'
-                    
+
                 Button:
                     id: button_start_load
-                    text:'Load Aventure'
+                    text:'Load Adventure'
                     on_release: root.on_start_load()
                     size_hint:(1,None)
                     height:32

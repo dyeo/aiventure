@@ -193,16 +193,12 @@ class MenuScreen(Screen):
         """
         Updates button_start_new depending on the model and text input status.
         """
-        if self.app.ai:
-            self.ids.button_start_new.text = 'Start Adventure'
-            self.ids.button_start_new.disabled = not (
-                self.ids.input_name.text.strip() and
-                self.ids.input_context.text.strip() and
-                self.ids.input_prompt.text.strip()
-            )
-        else:
-            self.ids.button_start_new.text = 'Please Load Model to Start'
-            self.ids.button_start_new.disabled = True
+        self.ids.button_start_new.disabled = not (
+            self.app.ai and
+            self.ids.input_name.text.strip() and
+            self.ids.input_context.text.strip() and
+            self.ids.input_prompt.text.strip()
+        )
 
     """
     LOAD GAME TAB
@@ -218,6 +214,7 @@ class MenuScreen(Screen):
                 data = json.load(json_file)
                 self.savefiles[data['name']] = data
         self.ids.view_game.data = [{'text': str(s)} for s in self.savefiles.keys()]
+        self.selected_savefile = None
 
     def on_game_selected(self, game) -> None:
         """
@@ -238,13 +235,7 @@ class MenuScreen(Screen):
         """
         Updates button_start_load depending on the model and text input status.
         """
-        if self.app.ai:
-            if self.selected_savefile is not None:
-                self.ids.button_start_load.text = 'Start Adventure'
-                self.ids.button_start_load.disabled = False
-            else:
-                self.ids.button_start_load.text = 'Select a Save File'
-                self.ids.button_start_load.disabled = True
-        else:
-            self.ids.button_start_load.text = 'Please Load Model to Start'
-            self.ids.button_start_load.disabled = True
+        self.ids.button_start_load.disabled = not (
+            self.app.ai and
+            self.selected_savefile
+        )
