@@ -175,7 +175,7 @@ class PlayScreen(Screen):
         elif self.mode == 'r':
             self.app.adventure.results[self.edit_index] = text
 
-    def _generate(self, text, record: bool = True, end: int = 0) -> Optional[str]:
+    def _generate(self, text, record: bool = True, end: Optional[int] = None) -> Optional[str]:
         """
         Tells the AI to generate new text.
 
@@ -185,6 +185,7 @@ class PlayScreen(Screen):
         :return: The result of the AI generation, or `None` if the AI timed out.
         """
         try:
+            end = len(self.app.adventure.full_story) if end is None else end
             story = self.app.adventure.get_remembered_story(self.app.config.getint('ai', 'memory'), end)
             story = ' '.join(story) + (' ' + text if text else '')
             result = func_timeout(
