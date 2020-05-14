@@ -207,10 +207,11 @@ class PlayScreen(Screen):
                     self.app.config.getfloat('ai', 'rep_pen'),
                 ),
             )
+            result = self.filter_output(result)
             if record:
                 self.app.adventure.actions.append(text)
                 self.app.adventure.results.append(result)
-            return self.filter_output(result)
+            return result
         except FunctionTimedOut:
             popup = ErrorPopup()
             popup.ids.error_text.text = 'The AI took too long to respond.\nPlease try something else.'
