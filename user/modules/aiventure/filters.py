@@ -1,32 +1,41 @@
+from typing import *
 import re
 
-sentence_ends = [r'\.',r'\!',r'\?',r'"[^"]*"']
+sentence_ends = [r'\.', r'\!', r'\?', r'"[^"]*"']
 
-def find_last_sentence_end(sentence):
+
+def find_last_sentence_end(sentence: str):
+    """
+    :param sentence: The sentence to search.
+    :return: The index of the last sentence end, according to the `sentence_ends` regex array in this module.
+    """
     end = -1
-    for c in sentence_ends:
-        p_end = [m.end() for m in re.finditer(c,sentence)]
+    for e in sentence_ends:
+        p_end = [m.end() for m in re.finditer(e, sentence)]
         end = max(end, p_end[-1] if len(p_end) > 0 else -1)
     return end
 
-def filter_input(input: str) -> str:
+
+def filter_input(text: str) -> str:
     """
     Default input filter.
-    :param input: The input to filter.
+    :param text: The input to filter.
     :return: Filtered input string.
     """
-    return input.strip()
+    return text.strip()
 
-def filter_output(output: str) -> str:
+
+def filter_output(text: str) -> str:
     """
     Default output filter.
-    :param output: The output to filter.
+    :param text: The output to filter.
     :return: Filtered output string.
     """
-    end = find_last_sentence_end(output)
-    return output[:end+1].strip()
+    end = find_last_sentence_end(text)
+    return text[:end + 1].strip()
 
-def filter_display(story: list) -> str:
+
+def filter_display(story: List[str]) -> str:
     """
     Default display filter.
     :param story: The story to format.

@@ -2,6 +2,8 @@ import importlib
 import json
 import os
 import sys
+from threading import Thread
+from typing import *
 
 from kivy.app import App as KivyApp
 from kivy.config import ConfigParser
@@ -9,28 +11,43 @@ from kivy.lang.builder import Builder
 from kivy.logger import Logger
 from kivy.uix.screenmanager import ScreenManager
 
+from aiventure.ai import AI
+from aiventure.play.adventure import Adventure
 from aiventure.uix.menu import MenuScreen
 from aiventure.uix.play import PlayScreen
-from aiventure.utils import get_save_name
-from aiventure.utils.settings import Settings
+from aiventure.utils import get_save_name, is_model_valid
 
 
 class AiventureApp(KivyApp):
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # UI
+        self.title: str = 'Aiventure'
+        self.sm: Optional[ScreenManager] = None
+        self.screens: Dict[str, ClassVar] = {}
+        # AI
+        self.ai: Optional[AI] = None
+        self.adventure: Optional[Adventure] = None
+        # Threading
+        self.threads: Dict[str, Thread] = {}
+        # Modules
+        self.loaded_modules: Dict[str, str] = {}
+        self.input_filters: List[Callable[[str], str]] = []
+        self.output_filters: List[Callable[[str], str]] = []
+        self.display_filter: Optional[Callable[[List[str]], str]] = None
+
     def build(self) -> ScreenManager:
         """
         """
-        self.title = 'AIventure'
-        self.threads = {}
-        self.init_ai()
         self.init_mods()
         self.init_ui()
         return self.sm
 
-    def build_config(self, config) -> None:
+    def build_config(self, _) -> None:
         """
         """
-        self.config = config = ConfigParser()
+        self.config = ConfigParser()
         self.config.read('config.ini')
         self.config.setdefaults('general', {
             'userdir': 'user',
@@ -54,22 +71,11 @@ class AiventureApp(KivyApp):
         })
         self.config.write()
 
-    def init_ai(self) -> None:
-        """
-        """
-        self.generator = None
-        self.adventure = None
-
     def init_mods(self) -> None:
         """
+        Initializes the game's module system and loads mods based on the current configuration.
         """
         sys.path.append(self.config.get('general', 'userdir'))
-
-        self.loaded_modules = {}
-
-        self.input_filters = []
-        self.output_filters = []
-        self.display_filter = None
 
         for f in self.config.get('modules', 'input_filters').split(','):
             domain, module = f.split(':')
@@ -111,10 +117,23 @@ class AiventureApp(KivyApp):
         """
         return self.get_user_path('models', self.config.get('ai', 'model'))
 
+    def get_valid_models(self) -> List[str]:
+        """
+        :return: A list of valid model names, inside {userdir}/models
+        """
+        return [m.name for m in os.scandir(self.get_user_path('models')) if is_model_valid(m.path)]
+
     def get_module_path(self, domain: str, module: str) -> str:
         return self.get_user_path('modules', domain, f'{module}.py')
 
-    def load_module(self, domain: str, module: str) -> None:
+    def load_module(self, domain: str, module: str) -> Any:
+        """
+        Loads a module and returns it (if it hasn't been loaded already).
+
+        :param domain: The module domain.
+        :param module: The module to load from the given domain.
+        :return: The loaded module.
+        """
         k = f'{domain}:{module}'
         v = self.loaded_modules.get(k)
         if v is None:
@@ -123,17 +142,31 @@ class AiventureApp(KivyApp):
         return v
 
     def load_submodule(self, domain: str, module: str, submodule: str) -> str:
+        """
+        Loads a submodule (a method, class, or variable from a given module).
+
+        :param domain: The module domain.
+        :param module: The module to load from the given domain.
+        :param submodule: The submodule to load from the given module.
+        :return: The loaded submodule.
+        """
         m = self.load_module(domain, module)
         return getattr(m, submodule)
 
     # SAVING AND LOADING
 
-    def save_adventure(self):
+    def save_adventure(self) -> None:
+        """
+        Saves the current adventure.
+        """
         savefile = get_save_name(self.adventure.name)
         with open(self.get_user_path('adventures', f'{savefile}.json'), 'w') as json_file:
             json.dump(self.adventure.to_dict(), json_file)
 
-    def load_adventure(self):
+    def load_adventure(self) -> None:
+        """
+        Loads the current adventure.
+        """
         savefile = get_save_name(self.adventure.name)
         with open(self.get_user_path('adventures', f'{savefile}.json'), 'r') as json_file:
             self.adventure.from_dict(json.load(json_file))

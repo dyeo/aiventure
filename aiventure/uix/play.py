@@ -1,3 +1,4 @@
+from typing import *
 import re
 import time
 import traceback
@@ -7,6 +8,7 @@ from func_timeout import func_timeout, FunctionTimedOut
 from func_timeout.StoppableThread import StoppableThread
 from kivy.app import App
 from kivy.logger import Logger
+from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import Screen
 
@@ -18,49 +20,76 @@ re_tag_end = r'\[/[^\[\]]+\]'
 
 
 class MenuPopup(Popup):
+    """
+    The menu popup, with resume, save/load, and exit to main menu options.
+    """
     def __init__(self, **kargs):
         super(MenuPopup, self).__init__(**kargs)
         init_widget(self)
 
     def on_save(self) -> None:
+        """
+        Triggered when the user saves the adventure using the save button.
+        """
         self.app.save_adventure()
         self.screen.on_update()
         self.dismiss()
 
     def on_load(self) -> None:
+        """
+        Triggered when the user loads the adventure using the load button.
+        """
         self.app.load_adventure()
         self.screen.on_update()
         self.dismiss()
 
     def on_quit(self) -> None:
+        """
+        Triggered when the user quits the adventure using the quit button.
+        """
         self.dismiss()
         self.app.sm.current = 'menu'
 
 
 class ErrorPopup(Popup):
+    """
+    A simple error popup.
+    """
     def __init__(self, **kargs):
         super(ErrorPopup, self).__init__(**kargs)
         init_widget(self)
 
 
 class PlayScreen(Screen):
-
+    """
+    The in-game screen.
+    """
     def __init__(self, **kargs):
         super(PlayScreen, self).__init__(**kargs)
-        self.app = App.get_running_app()
+        from aiventure import AiventureApp
+        self.app: AiventureApp = App.get_running_app()
         self.mode: str = ''
         self.edit_index: int = 0
-        self.altergen = False
-        self.ids.output_text.bind(on_ref_press=self.on_entry_selected)
+        self.altergen: bool = False
 
     def on_enter(self) -> None:
-        if len(self.app.adventure.results) == 0:
+        """
+        Called upon entering this screen.
+        """
+        self.ids.output_text.bind(on_ref_press=self.on_entry_selected)
+        if len(self.app.adventure.actions) == 1 and len(self.app.adventure.results) == 0:
             prompt = self.app.adventure.actions.pop(0)
             self.on_send(prompt)
         else:
             self.on_update()
 
     def on_update(self, scroll: bool = True, clear_input: bool = False) -> None:
+        """
+        Updates all core UI elements on this screen.
+
+        :param scroll: If `True`, scroll the output text label to the end.
+        :param clear_input: If `True`, clears the input text.
+        """
         self.ids.title_text.text = self.app.adventure.name
         # update bottom buttons
         buttons = [self.ids.button_menu, self.ids.button_cancel]
@@ -89,36 +118,54 @@ class PlayScreen(Screen):
         """
 
     def try_autosave(self) -> None:
+        """
+        Autosaves the current adventure, if and only if the autosave game setting is set to `True`.
+        """
         if self.app.config.getboolean('general', 'autosave'):
             self.app.save_adventure()
 
     # SENDING ACTIONS
 
-    def on_send(self, text=None) -> None:
+    def on_send(self, text: Optional[str] = None) -> None:
+        """
+        Triggered when button_send is pressed.
+
+        :param text: Override to use a different string instead of the input text.
+        """
         text = text or self.ids.input.text
         self.app.threads['send'] = threading.Thread(target=self._on_send_thread, args=(text,))
         self.app.threads['send'].start()
 
-    def _on_send_thread(self, text):
+    def _on_send_thread(self, text) -> None:
+        """
+        The thread started that handles AI text generation as well as other operations related to button_send.
+
+        :param text: The text in the input text box when send is pressed.
+        """
         text = self.filter_input(text)
         self.ids.input.disabled = True
         self.ids.button_send.disabled = True
         self.enable_bottom_buttons([])
         try:
-            self._select_send(text)
+            self._send(text)
         except Exception:
             Logger.error(f"AI: {traceback.format_exc()}")
         prev_mode = self.mode
         self.mode = ''
+        self.altergen = False
         self.on_update(scroll=(prev_mode == ''), clear_input=True)
         self.try_autosave()
         self.ids.input.disabled = False
         self.ids.button_send.disabled = False
 
-    def _select_send(self, text) -> None:
+    def _send(self, text) -> None:
+        """
+        Determines and performs the send action depending on the current `mode`.
+
+        :param text: The text to send.
+        """
         if self.altergen:
             text += ' ' + self._generate(text, record=False, end=int(self.edit_index/2))
-            self.altergen = False
         if self.mode == '':
             self._generate(text)
         elif self.mode == 'c':
@@ -128,13 +175,34 @@ class PlayScreen(Screen):
         elif self.mode == 'r':
             self.app.adventure.results[self.edit_index] = text
 
-    def _generate(self, text, record=True, start=0, end=0) -> str:
+    def _generate(self, text, record=True, end=0) -> Optional[str]:
+        """
+        Tells the AI to generate new text.
+
+        :param text: The input text for the AI to build upon.
+        :param record: If True, the input text and the result will be added automatically to the adventure.
+        :param end: How many entries back from the last in the adventure.
+        :return: The result of the AI generation, or `None` if the AI timed out.
+        """
         try:
+            story = self.app.adventure.get_remembered_story(self.app.config.getint('ai', 'memory'), end)
+            story = ' '.join(story) + (' ' + text if text else '')
             result = func_timeout(
                 self.app.config.getfloat('ai', 'timeout'),
-                self.app.adventure.get_result,
-                args=(self.app.generator, text, record, start, end),
+                self.app.ai.generate,
+                args=(
+                    story,
+                    self.app.config.getint('ai', 'gen_length'),
+                    self.app.config.getint('ai', 'batch_size'),
+                    self.app.config.getfloat('ai', 'temperature'),
+                    self.app.config.getint('ai', 'top_k'),
+                    self.app.config.getfloat('ai', 'top_p'),
+                    self.app.config.getfloat('ai', 'rep_pen'),
+                ),
             )
+            if record:
+                self.app.adventure.actions.append(text)
+                self.app.adventure.results.append(result)
             return self.filter_output(result)
         except FunctionTimedOut:
             popup = ErrorPopup()
@@ -142,8 +210,18 @@ class PlayScreen(Screen):
             popup.open()
         return None
 
-    def on_entry_selected(self, label, value):
-        match = re.match(r'([a-z])([0-9]+)?', value)
+    def on_entry_selected(self, _, ref) -> None:
+        """
+        Triggered when a story entry is pressed in the output text.
+
+        :param ref: The reference string for the story entry.
+        'c' for context.
+        'a' for action.
+        'r' for result.
+        'a' and 'r' will be proceeded immediately by a number, which specifies their index in the
+        adventure's `full_story` (not their indices in their respective `actions` and `results` lists).
+        """
+        match = re.match(r'([a-z])([0-9]+)?', ref)
         self.mode = match.group(1)
         if match.group(2):
             self.edit_index = int(int(match.group(2))/2)
@@ -157,37 +235,60 @@ class PlayScreen(Screen):
 
     # BOTTOM MENU
 
-    def enable_bottom_buttons(self, buttons: list) -> None:
+    def enable_bottom_buttons(self, buttons: List[Button]) -> None:
+        """
+        Enables all bottom-bar buttons in the provided list, and disables all other bottom-bar buttons.
+
+        :param buttons: The buttons in the bottom bar to leave enabled.
+        """
         for b in self.ids.group_bottom.children:
             b.disabled = (b not in buttons)
 
     def on_revert(self) -> None:
+        """
+        Triggered when button_revert is pressed.
+        """
         self.app.adventure.actions = self.app.adventure.actions[:-1]
         self.app.adventure.results = self.app.adventure.results[:-1]
         self.on_update()
         self.try_autosave()
 
     def on_retry(self) -> None:
+        """
+        Triggered when button_retry is pressed.
+        """
         action = self.app.adventure.actions[-1]
         self.app.adventure.actions = self.app.adventure.actions[:-1]
         self.app.adventure.results = self.app.adventure.results[:-1]
         self.on_send(action)
 
     def on_memory(self) -> None:
+        """
+        Triggered when button_memory is pressed.
+        """
         pass
 
     def on_altergen(self) -> None:
+        """
+        Triggered when button_altergen is pressed.
+        """
         self.altergen = True
         self.on_send()
 
     def on_cancel(self) -> None:
+        """
+        Triggered when button_cancel is pressed.
+        """
         self.mode = ''
-        self.on_update(scroll=False,clear_input=True)
+        self.on_update(scroll=False, clear_input=True)
         pass
 
     # OUTPUT AND DISPLAY
 
     def _update_output_thread(self) -> None:
+        """
+        Updates the output text with a cool scrolling text effect.
+        """
         prev_text = self.ids.output_text.text
         next_text = self.filter_display(self.app.adventure.full_story)
         text_diff = len(next_text) - len(prev_text)
@@ -221,16 +322,34 @@ class PlayScreen(Screen):
     # FILTERING
 
     def filter_input(self, text: str) -> str:
+        """
+        Filters the input according to the currently loaded input filters.
+
+        :param text: The input text.
+        :return: The filtered input text.
+        """
         result = text
         for f in self.app.input_filters:
             result = f(result)
         return result
 
     def filter_output(self, text: str) -> str:
+        """
+        Filters the output according to the currently loaded output filters.
+
+        :param text: The output text.
+        :return: The filtered output text.
+        """
         result = text
         for f in self.app.output_filters:
             result = f(result)
         return result
 
-    def filter_display(self, story: list) -> str:
+    def filter_display(self, story: List[str]) -> str:
+        """
+        Filters the story according to the currently loaded display filters.
+
+        :param story: The story.
+        :return: The filtered story text.
+        """
         return self.app.display_filter(story)

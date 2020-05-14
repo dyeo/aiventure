@@ -1,8 +1,8 @@
+from typing import *
 import json
-import os
 import threading
 
-from kivy.app import App
+from kivy.input import MotionEvent
 from kivy.logger import Logger
 from kivy.properties import BooleanProperty
 from kivy.uix.behaviors import FocusBehavior
@@ -13,66 +13,101 @@ from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.screenmanager import Screen
 from kivy.uix.settings import SettingsWithTabbedPanel
 
-from aiventure.ai.ai import AI
-from aiventure.ai.generator import LocalGenerator
+from aiventure.ai import AI
 from aiventure.play.adventure import Adventure
-from aiventure.utils import init_widget
+from aiventure.utils import *
 
 
-class SelectableRecycleBoxLayout(FocusBehavior, LayoutSelectionBehavior,
-                                 RecycleBoxLayout):
-    ''' Adds selection and focus behaviour to the view. '''
+class SelectableRecycleBoxLayout(
+    FocusBehavior,
+    LayoutSelectionBehavior,
+    RecycleBoxLayout
+):
+    """
+    Adds selection and focus behaviour to the view.
+    """
 
 
 class SelectableLabel(RecycleDataViewBehavior, Label):
-    ''' Add selection support to the Label '''
-    index = None
-    selected = BooleanProperty(False)
-    selectable = BooleanProperty(True)
+    """
+    Adds selection support to the label.
+    """
+    index: Optional[int] = None
+    selected: BooleanProperty = BooleanProperty(False)
+    selectable: BooleanProperty = BooleanProperty(True)
 
-    def __init__(self, **kargs):
-        super(SelectableLabel, self).__init__(**kargs)
+    def __init__(self, **kwargs):
+        super(SelectableLabel, self).__init__(**kwargs)
         init_widget(self)
 
-    def refresh_view_attrs(self, rv, index, data):
-        ''' Catch and handle the view changes '''
-        self.index = index
-        return super(SelectableLabel, self).refresh_view_attrs(rv, index, data)
+    def refresh_view_attrs(self, rv: Any, index: Any, data: Any) -> None:
+        """
+        Catch and handle the view changes.
 
-    def on_touch_down(self, touch):
-        ''' Add selection on touch down '''
+        :param rv: The recycle view.
+        :param index: The index of this label.
+        :param data: The data.
+        """
+        self.index = index
+        super(SelectableLabel, self).refresh_view_attrs(rv, index, data)
+
+    def on_touch_down(self, touch: MotionEvent) -> bool:
+        """
+        Triggered on a touch/mouse press event.
+
+        :param touch: The touch event sent by kivy.
+        :return: `True` if there is a touch, `False` otherwise.
+        """
         if super(SelectableLabel, self).on_touch_down(touch):
             return True
         if self.collide_point(*touch.pos) and self.selectable:
             return self.parent.select_with_touch(self.index, touch)
 
-    def apply_selection(self, rv, index, is_selected):
-        ''' Respond to the selection of items in the view. '''
+    def apply_selection(self, rv, index, is_selected) -> None:
+        """
+        Respond to the selection of items in the view.
+
+        :param rv: The recycle view.
+        :param index: The index of this label.
+        :param is_selected: Whether it is selected or not.
+        """
         self.selected = is_selected
 
 
 class SelectableModelLabel(SelectableLabel):
-    def apply_selection(self, rv, index, is_selected):
+    """
+    Specific implementation of SelectableLabel for the select model menu.
+    """
+    def apply_selection(self, rv, index, is_selected) -> None:
         super(SelectableModelLabel, self).apply_selection(rv, index, is_selected)
         self.screen.on_model_selected(self.text)
 
 
 class SelectableGameLabel(SelectableLabel):
-    def apply_selection(self, rv, index, is_selected):
+    """
+    Specific implementation of SelectableLabel for the load adventure menu.
+    """
+    def apply_selection(self, rv, index, is_selected) -> None:
         super(SelectableGameLabel, self).apply_selection(rv, index, is_selected)
         self.screen.on_game_selected(self.text)
 
 
 class MenuScreen(Screen):
-
+    """
+    The main menu screen.
+    """
     def __init__(self, **kw):
         super().__init__(**kw)
-        self.app = App.get_running_app()
-        self.savefiles = {}
-        self.selected_savefile = None
+        from aiventure import AiventureApp
+        self.app: AiventureApp = App.get_running_app()
+        self.savefiles: Dict[str, Dict[str, Any]] = {}
+        self.selected_savefile: Optional[str] = None
         self.init_settings()
 
-    def init_settings(self):
+    def init_settings(self) -> None:
+        """
+        Initializes the settings tab  using the default kivy implementation.
+        """
         settings = SettingsWithTabbedPanel()
         # this is to remove the unecessary close button
         settings.children[0].remove_widget(settings.children[0].children[0])
@@ -81,6 +116,9 @@ class MenuScreen(Screen):
         self.ids.tab_settings.add_widget(settings)
 
     def on_enter(self):
+        """
+        Called upon entering this screen.
+        """
         self.app.adventure = Adventure()
         self.init_models()
         self.init_saves()
@@ -88,68 +126,92 @@ class MenuScreen(Screen):
         self.update_button_start_load()
 
     def on_update(self):
+        """
+        Updates all core UI elements on this screen.
+        """
         self.update_button_start_new()
         self.update_button_start_load()
 
-    # AI MODEL TAB
+    """
+    AI MODEL TAB
+    """
 
-    def init_models(self):
-        self.ids.view_model.data = [{'text': str(m)} for m in self.get_module_directories()]
+    def init_models(self) -> None:
+        """
+        Fetches the models available for selection and loading.
+        """
+        self.ids.view_model.data = [{'text': str(m)} for m in self.app.get_valid_models()]
 
-    def get_module_directories(self) -> list:
-        return [m.name for m in os.scandir(self.app.get_user_path('models')) if self.model_is_valid(m.path)]
-
-    def model_is_valid(self, modelpath) -> bool:
-        return os.path.isfile(os.path.join(modelpath, 'pytorch_model.bin')) \
-               and os.path.isfile(os.path.join(modelpath, 'config.json')) \
-               and os.path.isfile(os.path.join(modelpath, 'vocab.json'))
-
-    def load_ai(self):
+    def load_ai(self) -> None:
+        """
+        Loads the currently selected AI model.
+        """
         threading.Thread(target=self._load_ai_thread).start()
 
-    def on_model_selected(self, model):
+    def on_model_selected(self, model) -> None:
+        """
+        Selects (but does not load) a given AI model by its name.
+
+        :param model: The name of the model to select.
+        """
         self.app.config.set('ai', 'model', model)
         self.ids.button_load_model.disabled = False
 
-    def _load_ai_thread(self):
+    def _load_ai_thread(self) -> None:
+        """
+        Internal thread for loading an AI model so that the main thread isn't blocked.
+        """
         self.ids.button_load_model.disabled = True
         model_path = self.app.get_model_path()
         model_name = os.path.split(model_path)[-1]
         try:
             self.ids.label_model.text = f'Loading Model "{model_name}"'
             Logger.info(f'AI: Loading model at "{model_path}"')
-            self.app.generator = None
-            self.app.generator = LocalGenerator(AI(model_path))
+            self.app.ai = None
+            self.app.ai = AI(model_path)
             Logger.info(f'AI: Model loaded at "{model_path}"')
         except Exception as e:
             self.ids.label_model.text = f'Error Loading Model "{model_name}"'
         else:
-            self.ids.label_model.text = f'Loaded Model: {model_name} ({self.app.generator.ai.model_info})'
+            self.ids.label_model.text = f'Loaded Model: {model_name} ({self.app.ai.model_info})'
             self.on_update()
 
-    # NEW GAME TAB
+    """   
+    NEW GAME TAB
+    """
 
-    def on_start_new(self):
+    def on_start_new(self) -> None:
+        """
+        Starts a new game and goes to the in-game screen.
+        """
         self.app.adventure.name = self.ids.input_name.text
         self.app.adventure.context = self.ids.input_context.text
         self.app.adventure.actions.append(self.ids.input_prompt.text)
         self.app.sm.current = 'play'
 
-    def update_button_start_new(self):
-        if self.app.generator:
+    def update_button_start_new(self) -> None:
+        """
+        Updates button_start_new depending on the model and text input status.
+        """
+        if self.app.ai:
             self.ids.button_start_new.text = 'Start Adventure'
             self.ids.button_start_new.disabled = not (
-                    self.ids.input_name.text.strip() and \
-                    self.ids.input_context.text.strip() and \
-                    self.ids.input_prompt.text.strip() \
-                )
+                self.ids.input_name.text.strip() and
+                self.ids.input_context.text.strip() and
+                self.ids.input_prompt.text.strip()
+            )
         else:
             self.ids.button_start_new.text = 'Please Load Model to Start'
             self.ids.button_start_new.disabled = True
 
-    # LOAD GAME TAB
+    """
+    LOAD GAME TAB
+    """
 
-    def init_saves(self):
+    def init_saves(self) -> None:
+        """
+        Fetches and loads all the game saves in the user directory for selection.
+        """
         paths = [s.path for s in os.scandir(self.app.get_user_path('adventures')) if s.path.endswith('.json')]
         for p in paths:
             with open(p, 'r') as json_file:
@@ -157,16 +219,27 @@ class MenuScreen(Screen):
                 self.savefiles[data['name']] = data
         self.ids.view_game.data = [{'text': str(s)} for s in self.savefiles.keys()]
 
-    def on_game_selected(self, game):
+    def on_game_selected(self, game) -> None:
+        """
+        Selects (but does not load) a given save by its name.
+
+        :param game: The name of the game to select.
+        """
         self.selected_savefile = game
 
-    def on_start_load(self):
+    def on_start_load(self) -> None:
+        """
+        Starts a game from a save and goes to the in-game screen.
+        """
         self.app.adventure.from_dict(self.savefiles[self.selected_savefile])
         self.app.sm.current = 'play'
 
-    def update_button_start_load(self):
-        if self.app.generator:
-            if self.selected_savefile:
+    def update_button_start_load(self) -> None:
+        """
+        Updates button_start_load depending on the model and text input status.
+        """
+        if self.app.ai:
+            if self.selected_savefile is not None:
                 self.ids.button_start_load.text = 'Start Adventure'
                 self.ids.button_start_load.disabled = False
             else:
