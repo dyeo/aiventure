@@ -79,10 +79,14 @@ class PlayScreen(Screen):
         if scroll:
             self.ids.scroll_input.scroll_y = 0
         # update output text
+        self.ids.output_text.text = self.filter_display(self.app.adventure.full_story)
+        # temporarily disabling fancy text outputting because it's broken
+        """
         if self.app.threads.get('output'):
             self.app.threads['output'].stop(StopThreadException)
         self.app.threads['output'] = StoppableThread(target=self._update_output_thread)
         self.app.threads['output'].start()
+        """
 
     def try_autosave(self) -> None:
         if self.app.config.getboolean('general', 'autosave'):
