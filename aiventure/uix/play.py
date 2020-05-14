@@ -185,8 +185,11 @@ class PlayScreen(Screen):
         :return: The result of the AI generation, or `None` if the AI timed out.
         """
         try:
-            end = len(self.app.adventure.full_story) if end is None else end
-            story = self.app.adventure.get_remembered_story(self.app.config.getint('ai', 'memory'), end)
+            story_len = len(self.app.adventure.full_story)
+            end = story_len if end is None else end
+            memory = self.app.config.getint('ai', 'memory')
+            memory = story_len if memory <= 0 else min(memory, story_len)
+            story = self.app.adventure.get_remembered_story(memory, end)
             story = ' '.join(story) + (' ' + text if text else '')
             result = func_timeout(
                 self.app.config.getfloat('ai', 'timeout'),
