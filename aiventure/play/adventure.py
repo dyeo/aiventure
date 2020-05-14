@@ -9,6 +9,7 @@ class Adventure(object):
     ):
         self.name: str = name
         self.context: str = context
+        self.memory: str = ''
         self.actions: List[str] = []
         self.results: List[str] = []
 
@@ -16,6 +17,7 @@ class Adventure(object):
         return {
             'name': self.name,
             'context': self.context,
+            'memory': self.memory,
             'actions': self.actions,
             'results': self.results
         }
@@ -23,6 +25,7 @@ class Adventure(object):
     def from_dict(self, d: Dict[str, Any]):
         self.name = d['name']
         self.context = d['context']
+        self.memory = d['memory']
         self.actions = d['actions']
         self.results = d['results']
 
@@ -47,10 +50,7 @@ class Adventure(object):
 
     def get_ai_story(self, start: Optional[int] = None, end: Optional[int] = None) -> list:
         """
-        Retrieves last portion remembered by the AI's memory.
-        :param memory: The number of latest actions/results to remember.
-        :param end: Where the "end" of the story is. `memory` number of elements (plus context) prior to this
-        reverse index will be returned.
+        Retrieves a clipped portion of the adventure, including the story's memory, for purposes of AI generation.
 
         :param start: Where to start remembering the story from.
         :param end: Where the "end" of the story is.
@@ -60,5 +60,6 @@ class Adventure(object):
         start = 0 if start is None else start
         end = len(self.story) if end is None else end
         result = [self.context] if self.context else []
+        result += [self.memory]
         result += self.story[start:end]
         return result

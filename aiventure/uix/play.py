@@ -94,6 +94,7 @@ class PlayScreen(Screen):
         # update bottom buttons
         buttons = [self.ids.button_menu, self.ids.button_cancel]
         if self.mode == '':
+            buttons += [self.ids.button_memory]
             buttons.remove(self.ids.button_cancel)
             if len(self.app.adventure.results) > 0:
                 buttons += [self.ids.button_revert]
@@ -174,6 +175,8 @@ class PlayScreen(Screen):
             self.app.adventure.actions[self.edit_index] = text
         elif self.mode == 'r':
             self.app.adventure.results[self.edit_index] = text
+        elif self.mode == 'm':
+            self.app.adventure.memory = text
 
     def _generate(self, text, record: bool = True, end: Optional[int] = None) -> Optional[str]:
         """
@@ -271,7 +274,9 @@ class PlayScreen(Screen):
         """
         Triggered when button_memory is pressed.
         """
-        pass
+        self.mode = 'm'
+        self.ids.input.text = self.app.adventure.memory
+        self.on_update(scroll=False, clear_input=False)
 
     def on_altergen(self) -> None:
         """

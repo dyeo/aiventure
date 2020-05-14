@@ -163,7 +163,7 @@ class AiventureApp(KivyApp):
         """
         savefile = get_save_name(self.adventure.name)
         with open(self.get_user_path('adventures', f'{savefile}.json'), 'w') as json_file:
-            json.dump(self.adventure.to_dict(), json_file)
+            json.dump(self.adventure.to_dict(), json_file, indent=4)
 
     def load_adventure(self) -> None:
         """
