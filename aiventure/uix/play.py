@@ -189,7 +189,7 @@ class PlayScreen(Screen):
             end = story_len if end is None else end
             memory = self.app.config.getint('ai', 'memory')
             memory = story_len if memory <= 0 else min(memory, story_len)
-            story = self.app.adventure.get_remembered_story(memory, end)
+            story = self.app.adventure.get_ai_story(end-memory, end)
             story = ' '.join(story) + (' ' + text if text else '')
             result = func_timeout(
                 self.app.config.getfloat('ai', 'timeout'),
