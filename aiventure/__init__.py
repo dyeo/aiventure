@@ -104,6 +104,7 @@ class AiventureApp(KivyApp):
     def get_user_path(self, *args: str) -> str:
         """
         Retrieves a path relative to the current user directory.
+
         :param args: The subdirectories / filenames in the user directory.
         :return: A path in the current user directory.
         """
@@ -112,6 +113,7 @@ class AiventureApp(KivyApp):
     def get_model_path(self, model: str) -> str:
         """
         Gets the path to the currently selected (but not necessarily loaded) AI model.
+
         :param model: The model within the models subdirectory.
         :return: The current selected model path.
         """
