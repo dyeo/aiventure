@@ -47,9 +47,9 @@ class Adventure(object):
         """
         Retrieves last portion remembered by the AI's memory.
         :param memory: The number of latest actions/results to remember.
-        :param end: Where the "end" of the story is. `memory` number of elements (plus contextprior to this index
-        will be returned.
+        :param end: Where the "end" of the story is. `memory` number of elements (plus context) prior to this
+        reverse index will be returned.
         :return: The story context string, followed by a list of the last `self.memory` action and result strings,
         interspersed.
         """
-        return ([self.context] if self.context else []) + self.story[-memory - end:-end]
+        return ([self.context] if self.context else []) + self.story[end-memory:end]

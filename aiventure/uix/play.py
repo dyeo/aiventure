@@ -136,7 +136,7 @@ class PlayScreen(Screen):
         self.app.threads['send'] = threading.Thread(target=self._on_send_thread, args=(text,))
         self.app.threads['send'].start()
 
-    def _on_send_thread(self, text) -> None:
+    def _on_send_thread(self, text: str) -> None:
         """
         The thread started that handles AI text generation as well as other operations related to button_send.
 
@@ -158,14 +158,14 @@ class PlayScreen(Screen):
         self.ids.input.disabled = False
         self.ids.button_send.disabled = False
 
-    def _send(self, text) -> None:
+    def _send(self, text: str) -> None:
         """
         Determines and performs the send action depending on the current `mode`.
 
         :param text: The text to send.
         """
         if self.altergen:
-            text += ' ' + self._generate(text, record=False, end=int(self.edit_index/2))
+            text += ' ' + self._generate(text, record=False, end=self.edit_index)
         if self.mode == '':
             self._generate(text)
         elif self.mode == 'c':
@@ -175,13 +175,13 @@ class PlayScreen(Screen):
         elif self.mode == 'r':
             self.app.adventure.results[self.edit_index] = text
 
-    def _generate(self, text, record=True, end=0) -> Optional[str]:
+    def _generate(self, text, record: bool = True, end: int = 0) -> Optional[str]:
         """
         Tells the AI to generate new text.
 
         :param text: The input text for the AI to build upon.
         :param record: If True, the input text and the result will be added automatically to the adventure.
-        :param end: How many entries back from the last in the adventure.
+        :param end: The entry to start generating from.
         :return: The result of the AI generation, or `None` if the AI timed out.
         """
         try:
@@ -214,6 +214,7 @@ class PlayScreen(Screen):
         """
         Triggered when a story entry is pressed in the output text.
 
+        :param _: Unused.
         :param ref: The reference string for the story entry.
         'c' for context.
         'a' for action.
