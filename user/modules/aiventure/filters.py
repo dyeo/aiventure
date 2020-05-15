@@ -53,6 +53,16 @@ def fix_end_quote(text: str):
     return (text + '"') if text.count('"') % 2 != 0 else text
 
 
+def clean_white_space(text: str):
+    """
+    Cleans up whitespace.
+
+    :param text: The text to process.
+    :return: The processed text.
+    """
+    return re.sub(r' +', ' ', text)
+
+
 def filter_input(text: str) -> str:
     """
     Default input filter.
@@ -73,6 +83,7 @@ def filter_output(text: str) -> str:
     result = formalize_quotes(text).strip()
     result = remove_sentence_fragment(result).strip()
     result = fix_end_quote(result).strip()
+    result = clean_white_space(result).strip()
     return result
 
 

@@ -56,12 +56,12 @@ class AiventureApp(KivyApp):
         self.config.setdefaults('ai', {
             'timeout': 20.0,
             'memory': 20,
-            'gen_length': 60,
-            'batch_size': 1,
+            'max_length': 60,
+            'beam_searches': 1,
             'temperature': 0.8,
             'top_k': 40,
             'top_p': 0.9,
-            'rep_pen': 1.1
+            'repetition_penalty': 1.1
         })
         self.config.setdefaults('modules', {
             'input_filters': 'aiventure:filters',
