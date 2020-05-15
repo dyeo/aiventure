@@ -2,49 +2,49 @@
 	{
         "type": "numeric",
         "title": "Timeout",
-        "desc": "How long to wait for the AI to respond before timing out.\n(default=20)",
+        "desc": "How long to wait for the AI to respond before timing out, in seconds.\nDefault is 20.0.",
         "section": "ai",
         "key": "timeout"
     },
 	{
         "type": "numeric",
         "title": "Memory",
-        "desc": "How many actions and results the AI can remember. 0 or less will use the whole story.\n(default=20)",
+        "desc": "How many actions and results the AI can remember. 0 or less will use the whole story.\nDefault is 20.",
         "section": "ai",
         "key": "memory"
     },
 	{
         "type": "numeric",
         "title": "Generation Length",
-        "desc": "The upper limit of words the AI will generate per action.\n(default=60)",
+        "desc": "The upper limit of words the AI will generate per action.\nDefault is 60.",
         "section": "ai",
         "key": "gen_length"
     },
 	{
         "type": "numeric",
         "title": "Temperature",
-        "desc": "Lower temperatures make the AI more picky, higher make the AI more sporadic.\n(default=0.8)",
+        "desc": "Lower temperatures make the AI more picky, higher make the AI more sporadic.\nDefault is 0.8.",
         "section": "ai",
         "key": "temperature"
     },
 	{
         "type": "numeric",
         "title": "Top K Value",
-        "desc": "(default=0.8)",
+        "desc": "Keep only the top K tokens with the highest probability.\nDefault is 40.",
         "section": "ai",
         "key": "top_k"
     },
 	{
         "type": "numeric",
         "title": "Top P Value",
-        "desc": "(default=0.8)",
+        "desc": "Keep only the tokens with a cumulative probability greater or equal to P.\nDefault is 0.9.",
         "section": "ai",
         "key": "top_p"
     },
 	{
         "type": "numeric",
         "title": "Repetition Penalty",
-        "desc": "1 is no penalty, <1 makes it more likely to repeat, >1 makes it less likely to repeat.\n(default=1.1)",
+        "desc": "1 is no penalty, <1 makes it more likely to repeat, >1 makes it less likely to repeat.\nDefault is 1.1.",
         "section": "ai",
         "key": "rep_pen"
     }
