@@ -1,5 +1,6 @@
 from typing import *
 import re
+import sys
 import time
 import traceback
 import threading
@@ -194,8 +195,10 @@ class PlayScreen(Screen):
             memory = story_len if memory <= 0 else min(memory, story_len)
             story = self.app.adventure.get_ai_story(end-memory, end)
             story = ' '.join(story) + (' ' + text if text else '')
+            timeout = self.app.config.getfloat('ai', 'timeout')
+            timeout = 604800.0 if timeout <= 0 else timeout
             result = func_timeout(
-                self.app.config.getfloat('ai', 'timeout'),
+                timeout,
                 self.app.ai.generate,
                 args=(
                     story,
