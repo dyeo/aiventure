@@ -5,6 +5,20 @@ sentence_ends = [r'\.', r'\!', r'\?', r'"[^"]+"']
 quote_classes = {'"': '“”', '\'': '`’'}
 
 
+def get_last_sentence_end(text: str) -> int:
+    """
+    Finds the last sentence end in a given piece of text.
+
+    :param text: The text to search.
+    :return: The index of the last character in the last sentence end in the given text.
+    """
+    end = -1
+    for e in sentence_ends:
+        p_end = [m.end() for m in re.finditer(e, text)]
+        end = max(end, p_end[-1] if len(p_end) > 0 else -1)
+    return end
+
+
 def remove_sentence_fragment(text: str) -> str:
     """
     Removes any dangling or incomplete sentences at the end of the given text.
@@ -12,10 +26,7 @@ def remove_sentence_fragment(text: str) -> str:
     :param text: The text to process.
     :return: The processed text.
     """
-    end = -1
-    for e in sentence_ends:
-        p_end = [m.end() for m in re.finditer(e, text)]
-        end = max(end, p_end[-1] if len(p_end) > 0 else -1)
+    end = get_last_sentence_end(text)
     return text[:end + 1]
 
 
@@ -90,7 +101,7 @@ def filter_display(story: List[str]) -> str:
         if h < 0:
             result += story_elem
         else:
-            end = remove_sentence_fragment(story[h])
+            end = get_last_sentence_end(story[h])
             if end == len(story[h]):
                 result += '\n\n' + story_elem
             else:
