@@ -9,31 +9,7 @@
 import torch
 import torch.nn.functional as F
 
-
-def top_k_logits(logits, k, filter_value=-float("Inf")):
-    if k == 0:
-        return logits
-    indices_to_remove = logits < torch.topk(logits, k)[0][..., -1, None]
-    logits[indices_to_remove] = filter_value
-    return logits
-
-
-def top_p_logits(logits, p, filter_value=-float("Inf")):
-    if p == 0:
-        return logits
-    sorted_logits, sorted_indices = torch.sort(logits, descending=True)
-    cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
-    # Remove tokens with cumulative probability above the threshold
-    sorted_indices_to_remove = cumulative_probs > p
-    # Shift the indices to the right to keep also the first token above the threshold
-    sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
-    sorted_indices_to_remove[..., 0] = 0
-    # scatter sorted tensors to original indexing
-    indices_to_remove = sorted_indices_to_remove.scatter(
-        dim=1, index=sorted_indices, src=sorted_indices_to_remove
-    )
-    logits[indices_to_remove] = filter_value
-    return logits
+from transformers.modeling_utils import top_k_top_p_filtering
 
 
 def sample_sequence(
@@ -59,8 +35,7 @@ def sample_sequence(
             for j in range(batch_size):
                 for k in set(output[j].tolist()):
                     logits[j, k] /= rep_pen
-            logits = top_k_logits(logits, k=top_k)
-            logits = top_p_logits(logits, p=top_p)
+            logits = top_k_top_p_filtering(logits, top_k=top_k, top_p=top_p, filter_value=-float("Inf"))
             log_probs = F.softmax(logits, dim=-1)
             next = torch.multinomial(log_probs, num_samples=1)
             output = torch.cat((output, next), dim=1)
