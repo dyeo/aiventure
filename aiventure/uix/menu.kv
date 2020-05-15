@@ -41,7 +41,7 @@
                     viewclass: 'SelectableModelLabel'
 
                 Label:
-                    id: label_model
+                    id: status_text_model
                     text: 'No Model Loaded'
                     size_hint:(1,None)
                     height:32
@@ -106,12 +106,19 @@
                     multiline: True
                     do_scroll_y: True
 
+                Label:
+                    id: status_text_new
+                    text: 'No Model Loaded'
+                    size_hint:(1,None)
+                    height:32
+
                 Button:
                     id: button_start_new
                     text: 'Start Adventure'
                     on_release: root.on_start_new()
                     size_hint: (1,None)
                     height:32
+                    disabled: True
         
         # LOAD GAME TAB
         TabbedPanelItem:
@@ -125,10 +132,16 @@
                 SelectionView:
                     id: view_game
                     viewclass: 'SelectableGameLabel'
-                    
+
+                Label:
+                    id: status_text_load
+                    text: 'No Model Loaded'
+                    size_hint:(1,None)
+                    height:32
+
                 Button:
                     id: button_start_load
-                    text:'Load Aventure'
+                    text:'Load Adventure'
                     on_release: root.on_start_load()
                     size_hint:(1,None)
                     height:32

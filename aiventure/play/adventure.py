@@ -1,76 +1,65 @@
 from typing import *
 
-from kivy.app import App
-
-from aiventure.ai.generator import Generator
 
 class Adventure(object):
     def __init__(
             self,
             name: str = None,
             context: str = None,
-            memory: int = 20
     ):
-        self.name = name
-        self.context = context
-        self.memory = memory
-        self.actions = []
-        self.results = []
+        self.name: str = name
+        self.context: str = context
+        self.memory: str = ''
+        self.actions: List[str] = []
+        self.results: List[str] = []
 
     def to_dict(self) -> dict:
-        result = {}
-        result['name'] = self.name
-        result['context'] = self.context
-        result['memory'] = self.memory
-        result['actions'] = self.actions
-        result['results'] = self.results
-        return result
+        return {
+            'name': self.name,
+            'context': self.context,
+            'memory': self.memory,
+            'actions': self.actions,
+            'results': self.results
+        }
 
-    def from_dict(self, d):
+    def from_dict(self, d: Dict[str, Any]):
         self.name = d['name']
-        self.context = d['context'] 
-        self.memory = d['memory']  
-        self.actions = d['actions'] 
+        self.context = d['context']
+        self.memory = d['memory']
+        self.actions = d['actions']
         self.results = d['results']
 
     @property
     def story(self) -> list:
         """
         The user actions and AI results in chronological order, not including the story context.
+
         :return: A list of action and result strings, interspersed, starting with the first action.
         """
-        res = [s for p in zip(self.actions, self.results) for s in p]
-        return [s for s in res if s and len(s.strip()) > 0]
+        return [s for p in zip(self.actions, self.results) for s in p]
 
     @property
     def full_story(self) -> list:
         """
         The user actions and AI results in chronological order, including the story context.
-        :return: The story context string, followed by a list of action and result strings, interspersed, starting with the first action.
+
+        :return: The story context string, followed by a list of action and result strings, interspersed, starting
+        with the first action.
         """
         return ([self.context] if self.context else []) + self.story
 
-    @property
-    def remembered_story(self) -> list:
+    def get_ai_story(self, start: Optional[int] = None, end: Optional[int] = None) -> list:
         """
-        The last portion remembered by the AI's memory.
-        :return: The story context string, followed by a list of the last `self.memory` action and result strings, interspersed.
+        Retrieves a clipped portion of the adventure, including the story's memory, for purposes of AI generation.
+
+        :param start: Where to start remembering the story from.
+        :param end: Where the "end" of the story is.
+        :return: The story context string, followed by a list of the last `self.memory` action and result strings,
+        interspersed.
         """
-        return ([self.context] if self.context else []) + self.story[-self.memory:]
-    
-    def get_result(self, generator: Generator, action: str, record: bool = True) -> str:
-        """
-        Gets a raw result from the AI, taking into account the existing story.
-        :param action: The action the user has submitted to the AI.
-        :param record: Should the result be recorded to the story?
-        :return: An acceptable result from the AI.
-        """
-        temp_story = self.remembered_story
-        if action:
-            temp_story += [action]
-        temp_story = ' '.join(temp_story) + ' '
-        result = generator.generate(temp_story)
-        if record:
-            self.actions.append(action)
-            self.results.append(result)
+        start = 0 if start is None else start
+        end = len(self.story) if end is None else end
+        result = [self.context] if self.context else []
+        result += [self.memory]
+        result += self.story[start:end]
         return result
