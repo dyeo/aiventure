@@ -9,16 +9,23 @@
 	{
         "type": "numeric",
         "title": "Memory",
-        "desc": "How many actions and results the AI can remember. 0 or less will use the whole story.\nDefault is 20.",
+        "desc": "How many actions and results the AI can remember. This doesn't affect context or memory. 0 or less will use the whole story.\nDefault is 20.",
         "section": "ai",
         "key": "memory"
     },
 	{
         "type": "numeric",
-        "title": "Generation Length",
-        "desc": "The upper limit of words the AI will generate per action.\nDefault is 60.",
+        "title": "Max Length",
+        "desc": "The maximum length of words in the sequence the AI will generate.\nDefault is 60.",
         "section": "ai",
-        "key": "gen_length"
+        "key": "max_length"
+    },
+	{
+        "type": "numeric",
+        "title": "Beam Searches",
+        "desc": "Number of searches the AI performs to find a higher cumulative text sequence probability.\nDefault is 1.",
+        "section": "ai",
+        "key": "beam_searches"
     },
 	{
         "type": "numeric",
@@ -37,15 +44,15 @@
 	{
         "type": "numeric",
         "title": "Top P Value",
-        "desc": "Keep only the tokens with a cumulative probability greater or equal to P.\nDefault is 0.9.",
+        "desc": "Keep only the tokens with a cumulative probability greater than or equal to P.\nDefault is 0.9.",
         "section": "ai",
         "key": "top_p"
     },
 	{
         "type": "numeric",
         "title": "Repetition Penalty",
-        "desc": "1 is no penalty, <1 makes it more likely to repeat, >1 makes it less likely to repeat.\nDefault is 1.1.",
+        "desc": "1 is no penalty, >1 makes it less likely to repeat words in a given sequence.\nDefault is 1.1.",
         "section": "ai",
-        "key": "rep_pen"
+        "key": "repetition_penalty"
     }
 ]

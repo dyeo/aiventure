@@ -1,19 +1,18 @@
 from typing import *
 import re
+import sys
 import time
 import traceback
 import threading
 
 from func_timeout import func_timeout, FunctionTimedOut
-from func_timeout.StoppableThread import StoppableThread
-from kivy.app import App
 from kivy.logger import Logger
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import Screen
 
-from aiventure.utils import init_widget
-from aiventure.utils.threading import StopThreadException
+from aiventure.common.utils import StopThreadException
+from aiventure.client.utils import init_widget
 
 re_tag_start = r'\[[^/\[\]]+\]'
 re_tag_end = r'\[/[^\[\]]+\]'
@@ -66,8 +65,8 @@ class PlayScreen(Screen):
     """
     def __init__(self, **kargs):
         super(PlayScreen, self).__init__(**kargs)
-        from aiventure import AiventureApp
-        self.app: AiventureApp = App.get_running_app()
+        from aiventure.client.app import App
+        self.app: App = App.get_running_app()
         self.mode: str = ''
         self.edit_index: int = 0
         self.altergen: bool = False
@@ -147,36 +146,50 @@ class PlayScreen(Screen):
         self.ids.input.disabled = True
         self.ids.button_send.disabled = True
         self.enable_bottom_buttons([])
-        try:
-            self._send(text)
-        except Exception:
-            Logger.error(f"AI: {traceback.format_exc()}")
+        error = self._try_send(text)
         prev_mode = self.mode
         self.mode = ''
         self.altergen = False
-        self.on_update(scroll=(prev_mode == ''), clear_input=True)
-        self.try_autosave()
+        self.on_update(scroll=(prev_mode == ''), clear_input=error is None)
+        if error is None:
+            self.try_autosave()
         self.ids.input.disabled = False
         self.ids.button_send.disabled = False
 
-    def _send(self, text: str) -> None:
+    def _try_send(self, text: str) -> Optional[BaseException]:
         """
         Determines and performs the send action depending on the current `mode`.
 
         :param text: The text to send.
         """
-        if self.altergen:
-            text += ' ' + self._generate(text, record=False, end=self.edit_index)
-        if self.mode == '':
-            self._generate(text)
-        elif self.mode == 'c':
-            self.app.adventure.context = text
-        elif self.mode == 'a':
-            self.app.adventure.actions[self.edit_index] = text
-        elif self.mode == 'r':
-            self.app.adventure.results[self.edit_index] = text
-        elif self.mode == 'm':
-            self.app.adventure.memory = text
+        result = None
+        try:
+            if self.altergen:
+                text += ' ' + self._generate(text, record=False, end=self.edit_index)
+            if self.mode == '':
+                self._generate(text)
+            elif self.mode == 'c':
+                self.app.adventure.context = text
+            elif self.mode == 'a':
+                self.app.adventure.actions[self.edit_index] = text
+            elif self.mode == 'r':
+                self.app.adventure.results[self.edit_index] = text
+            elif self.mode == 'm':
+                self.app.adventure.memory = text
+        except FunctionTimedOut as result:
+            popup = ErrorPopup()
+            popup.ids.error_text.text = 'The AI took too long to respond.\n' \
+                                        'Please try something else.'
+            popup.open()
+            Logger.info(f"AI: AI timed out.")
+        except Exception as result:
+            popup = ErrorPopup()
+            popup.ids.error_text.text = 'An unexpected error occurred.\n' \
+                                        'Please try something else,\n' \
+                                        'or adjust your settings.'
+            popup.open()
+            Logger.error(f"AI: {traceback.format_exc()}")
+        return result
 
     def _generate(self, text, record: bool = True, end: Optional[int] = None) -> Optional[str]:
         """
@@ -187,36 +200,32 @@ class PlayScreen(Screen):
         :param end: The entry to start generating from.
         :return: The result of the AI generation, or `None` if the AI timed out.
         """
-        try:
-            story_len = len(self.app.adventure.full_story)
-            end = story_len if end is None else end
-            memory = self.app.config.getint('ai', 'memory')
-            memory = story_len if memory <= 0 else min(memory, story_len)
-            story = self.app.adventure.get_ai_story(end-memory, end)
-            story = ' '.join(story) + (' ' + text if text else '')
-            result = func_timeout(
-                self.app.config.getfloat('ai', 'timeout'),
-                self.app.ai.generate,
-                args=(
-                    story,
-                    self.app.config.getint('ai', 'gen_length'),
-                    self.app.config.getint('ai', 'batch_size'),
-                    self.app.config.getfloat('ai', 'temperature'),
-                    self.app.config.getint('ai', 'top_k'),
-                    self.app.config.getfloat('ai', 'top_p'),
-                    self.app.config.getfloat('ai', 'rep_pen'),
-                ),
-            )
-            result = self.filter_output(result)
-            if record:
-                self.app.adventure.actions.append(text)
-                self.app.adventure.results.append(result)
-            return result
-        except FunctionTimedOut:
-            popup = ErrorPopup()
-            popup.ids.error_text.text = 'The AI took too long to respond.\nPlease try something else.'
-            popup.open()
-        return None
+        story_len = len(self.app.adventure.story)
+        end = story_len if end is None else end
+        memory = self.app.config.getint('ai', 'memory')
+        memory = story_len if memory <= 0 else min(memory, end)
+        story = self.app.adventure.get_ai_story(end-memory, end)
+        story = ' '.join(story) + (' ' + text if text else '')
+        timeout = self.app.config.getfloat('ai', 'timeout')
+        timeout = 604800.0 if timeout <= 0 else timeout
+        result = func_timeout(
+            timeout,
+            self.app.ai.generate,
+            args=(
+                story,
+                self.app.config.getint('ai', 'max_length'),
+                self.app.config.getint('ai', 'beam_searches'),
+                self.app.config.getfloat('ai', 'temperature'),
+                self.app.config.getint('ai', 'top_k'),
+                self.app.config.getfloat('ai', 'top_p'),
+                self.app.config.getfloat('ai', 'repetition_penalty'),
+            ),
+        )
+        result = self.filter_output(result)
+        if record:
+            self.app.adventure.actions.append(text)
+            self.app.adventure.results.append(result)
+        return result
 
     def on_entry_selected(self, _, ref) -> None:
         """

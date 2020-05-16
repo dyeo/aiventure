@@ -13,9 +13,10 @@ from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.screenmanager import Screen
 from kivy.uix.settings import SettingsWithTabbedPanel
 
-from aiventure.ai import AI
-from aiventure.play.adventure import Adventure
-from aiventure.utils import *
+from aiventure.common.ai import AI
+from aiventure.common.adventure import Adventure
+from aiventure.client.utils import init_widget
+from aiventure.common.utils import *
 
 
 class SelectableRecycleBoxLayout(
@@ -100,8 +101,8 @@ class MenuScreen(Screen):
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        from aiventure import AiventureApp
-        self.app: AiventureApp = App.get_running_app()
+        from aiventure.client.app import App
+        self.app: App = App.get_running_app()
         self.savefiles: Dict[str, Dict[str, Any]] = {}
         self.selected_model: Optional[str] = None
         self.selected_savefile: Optional[str] = None
@@ -114,8 +115,8 @@ class MenuScreen(Screen):
         settings = SettingsWithTabbedPanel()
         # this is to remove the unecessary close button
         settings.children[0].remove_widget(settings.children[0].children[0])
-        settings.add_json_panel('General', self.app.config, 'aiventure/uix/settings/general.json')
-        settings.add_json_panel('AI', self.app.config, 'aiventure/uix/settings/ai.json')
+        settings.add_json_panel('General', self.app.config, 'aiventure/client/uix/settings/general.json')
+        settings.add_json_panel('AI', self.app.config, 'aiventure/client/uix/settings/ai.json')
         self.ids.tab_settings.add_widget(settings)
 
     def on_enter(self):
