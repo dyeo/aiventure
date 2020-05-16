@@ -201,10 +201,10 @@ class PlayScreen(Screen):
         :param end: The entry to start generating from.
         :return: The result of the AI generation, or `None` if the AI timed out.
         """
-        story_len = len(self.app.adventure.full_story)
+        story_len = len(self.app.adventure.story)
         end = story_len if end is None else end
         memory = self.app.config.getint('ai', 'memory')
-        memory = story_len if memory <= 0 else min(memory, story_len)
+        memory = story_len if memory <= 0 else min(memory, end)
         story = self.app.adventure.get_ai_story(end-memory, end)
         story = ' '.join(story) + (' ' + text if text else '')
         timeout = self.app.config.getfloat('ai', 'timeout')
