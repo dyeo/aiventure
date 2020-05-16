@@ -6,15 +6,13 @@ import traceback
 import threading
 
 from func_timeout import func_timeout, FunctionTimedOut
-from func_timeout.StoppableThread import StoppableThread
-from kivy.app import App
 from kivy.logger import Logger
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import Screen
 
-from aiventure.utils import init_widget
-from aiventure.utils.threading import StopThreadException
+from aiventure.common.utils import StopThreadException
+from aiventure.client.utils import init_widget
 
 re_tag_start = r'\[[^/\[\]]+\]'
 re_tag_end = r'\[/[^\[\]]+\]'
@@ -67,8 +65,8 @@ class PlayScreen(Screen):
     """
     def __init__(self, **kargs):
         super(PlayScreen, self).__init__(**kargs)
-        from aiventure import AiventureApp
-        self.app: AiventureApp = App.get_running_app()
+        from aiventure.client.app import App
+        self.app: App = App.get_running_app()
         self.mode: str = ''
         self.edit_index: int = 0
         self.altergen: bool = False
@@ -148,49 +146,50 @@ class PlayScreen(Screen):
         self.ids.input.disabled = True
         self.ids.button_send.disabled = True
         self.enable_bottom_buttons([])
-        error = False
+        error = self._try_send(text)
+        prev_mode = self.mode
+        self.mode = ''
+        self.altergen = False
+        self.on_update(scroll=(prev_mode == ''), clear_input=error is None)
+        if error is None:
+            self.try_autosave()
+        self.ids.input.disabled = False
+        self.ids.button_send.disabled = False
+
+    def _try_send(self, text: str) -> Optional[BaseException]:
+        """
+        Determines and performs the send action depending on the current `mode`.
+
+        :param text: The text to send.
+        """
+        result = None
         try:
-            self._send(text)
-        except FunctionTimedOut:
-            error = True
+            if self.altergen:
+                text += ' ' + self._generate(text, record=False, end=self.edit_index)
+            if self.mode == '':
+                self._generate(text)
+            elif self.mode == 'c':
+                self.app.adventure.context = text
+            elif self.mode == 'a':
+                self.app.adventure.actions[self.edit_index] = text
+            elif self.mode == 'r':
+                self.app.adventure.results[self.edit_index] = text
+            elif self.mode == 'm':
+                self.app.adventure.memory = text
+        except FunctionTimedOut as result:
             popup = ErrorPopup()
             popup.ids.error_text.text = 'The AI took too long to respond.\n' \
                                         'Please try something else.'
             popup.open()
-        except:
-            error = True
+            Logger.info(f"AI: AI timed out.")
+        except Exception as result:
             popup = ErrorPopup()
             popup.ids.error_text.text = 'An unexpected error occurred.\n' \
                                         'Please try something else,\n' \
                                         'or adjust your settings.'
             popup.open()
             Logger.error(f"AI: {traceback.format_exc()}")
-        prev_mode = self.mode
-        self.mode = ''
-        self.altergen = False
-        self.on_update(scroll=(prev_mode == ''), clear_input=not error)
-        self.try_autosave()
-        self.ids.input.disabled = False
-        self.ids.button_send.disabled = False
-
-    def _send(self, text: str) -> None:
-        """
-        Determines and performs the send action depending on the current `mode`.
-
-        :param text: The text to send.
-        """
-        if self.altergen:
-            text += ' ' + self._generate(text, record=False, end=self.edit_index)
-        if self.mode == '':
-            self._generate(text)
-        elif self.mode == 'c':
-            self.app.adventure.context = text
-        elif self.mode == 'a':
-            self.app.adventure.actions[self.edit_index] = text
-        elif self.mode == 'r':
-            self.app.adventure.results[self.edit_index] = text
-        elif self.mode == 'm':
-            self.app.adventure.memory = text
+        return result
 
     def _generate(self, text, record: bool = True, end: Optional[int] = None) -> Optional[str]:
         """

@@ -1,8 +1,12 @@
 import re
 import os
 
-from kivy.app import App
-from kivy.uix.widget import Widget
+
+class StopThreadException(BaseException):
+    """
+    Dummy exception for stopping threads using the func_timeout StoppableThread.
+    """
+    pass
 
 
 def get_save_name(adventure_name: str) -> str:
@@ -13,17 +17,6 @@ def get_save_name(adventure_name: str) -> str:
     adventure_name = re.sub(r'\s+', '_', adventure_name.strip())
     adventure_name = re.sub(r'[^a-zA-Z0-9_-]', '', adventure_name)
     return adventure_name
-
-
-def init_widget(widget: Widget) -> None:
-    """
-    Initializes a kivy widget with some standard members.
-
-    :param widget: The widget to initialize.
-    :return:
-    """
-    widget.app = App.get_running_app()
-    widget.screen = widget.app.root.current_screen
 
 
 def is_model_valid(model_path: str) -> bool:
