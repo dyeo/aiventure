@@ -8,13 +8,6 @@
     },
 	{
         "type": "numeric",
-        "title": "Memory",
-        "desc": "How many actions and results the AI can remember. This doesn't affect context or memory. 0 or less will use the whole story.\nDefault is 20.",
-        "section": "ai",
-        "key": "memory"
-    },
-	{
-        "type": "numeric",
         "title": "Max Length",
         "desc": "The maximum length of words in the sequence the AI will generate.\nDefault is 60.",
         "section": "ai",
