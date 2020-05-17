@@ -55,7 +55,6 @@ class App(KivyApp):
         })
         self.config.setdefaults('ai', {
             'timeout': 20.0,
-            'memory': 20,
             'max_length': 60,
             'beam_searches': 1,
             'temperature': 0.8,

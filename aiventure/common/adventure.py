@@ -47,19 +47,3 @@ class Adventure(object):
         with the first action.
         """
         return ([self.context] if self.context else []) + self.story
-
-    def get_ai_story(self, start: Optional[int] = None, end: Optional[int] = None) -> list:
-        """
-        Retrieves a clipped portion of the adventure, including the story's memory, for purposes of AI generation.
-
-        :param start: Where to start remembering the story from.
-        :param end: Where the "end" of the story is.
-        :return: The story context string, followed by a list of the last `self.memory` action and result strings,
-        interspersed.
-        """
-        start = 0 if start is None else start
-        end = len(self.story) if end is None else end
-        result = [self.context] if self.context else []
-        result += [self.memory]
-        result += self.story[start:end]
-        return result

@@ -176,13 +176,15 @@ class PlayScreen(Screen):
                 self.app.adventure.results[self.edit_index] = text
             elif self.mode == 'm':
                 self.app.adventure.memory = text
-        except FunctionTimedOut as result:
+        except FunctionTimedOut as e:
+            result = e
             popup = ErrorPopup()
             popup.ids.error_text.text = 'The AI took too long to respond.\n' \
                                         'Please try something else.'
             popup.open()
             Logger.info(f"AI: AI timed out.")
-        except Exception as result:
+        except Exception as e:
+            result = e
             popup = ErrorPopup()
             popup.ids.error_text.text = 'An unexpected error occurred.\n' \
                                         'Please try something else,\n' \
@@ -200,19 +202,16 @@ class PlayScreen(Screen):
         :param end: The entry to start generating from.
         :return: The result of the AI generation, or `None` if the AI timed out.
         """
-        story_len = len(self.app.adventure.story)
-        end = story_len if end is None else end
-        memory = self.app.config.getint('ai', 'memory')
-        memory = story_len if memory <= 0 else min(memory, end)
-        story = self.app.adventure.get_ai_story(end-memory, end)
-        story = ' '.join(story) + (' ' + text if text else '')
+        context = self.app.adventure.context
+        context += (' ' + self.app.adventure.memory) if self.app.adventure.memory else ''
+        prompt = ' '.join(self.app.adventure.story + ([text] if text else []))
         timeout = self.app.config.getfloat('ai', 'timeout')
-        timeout = 604800.0 if timeout <= 0 else timeout
         result = func_timeout(
-            timeout,
+            604800.0 if timeout <= 0 else timeout,
             self.app.ai.generate,
             args=(
-                story,
+                context,
+                prompt,
                 self.app.config.getint('ai', 'max_length'),
                 self.app.config.getint('ai', 'beam_searches'),
                 self.app.config.getfloat('ai', 'temperature'),
