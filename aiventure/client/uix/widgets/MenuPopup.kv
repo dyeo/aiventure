@@ -1,0 +1,24 @@
+<MenuPopup>:
+	title: 'Menu'
+	size_hint: (0.4,0.667)
+	auto_dismiss: False
+
+	BoxLayout:
+		spacing: 4
+		orientation: 'vertical'
+
+		Button:
+			text: 'Resume'
+			on_release: root.dismiss()
+
+		Button:
+			text: 'Save Adventure'
+			on_release: root.on_save()
+
+		Button:
+			text: 'Load Adventure'
+			on_release: root.on_load()
+
+		Button:
+			text: 'Quit to Main Menu'
+			on_release: root.on_quit()

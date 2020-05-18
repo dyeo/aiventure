@@ -1,51 +1,6 @@
 #:import Factory kivy.factory.Factory
-
-<MenuPopup>:
-	title: 'Menu'
-	size_hint: (0.4,0.667)
-	auto_dismiss: False
-
-	BoxLayout:
-		spacing: 4
-		orientation: 'vertical'
-
-		Button:
-			text: 'Resume'
-			on_release: root.dismiss()
-
-		Button:
-			text: 'Save Adventure'
-			on_release: root.on_save()
-
-		Button:
-			text: 'Load Adventure'
-			on_release: root.on_load()
-
-		Button:
-			text: 'Quit to Main Menu'
-			on_release: root.on_quit()
-
-
-<ErrorPopup>
-
-	title: 'Woops!'
-	size_hint: (0.4, 0.4)
-	auto_dismiss: False
-
-	BoxLayout:
-
-		Label:
-			id: error_text
-			text: ''
-			halign: 'center'
-			valign: 'middle'
-
-		Button:
-			text: 'Ok'
-			on_release: root.dismiss()
-			size_hint: (1,None)
-			height: 32
-			
+#:import MenuPopup aiventure.client.uix.widgets.MenuPopup
+#:import ErrorPopup aiventure.client.uix.widgets.ErrorPopup
 
 <PlayScreen>:
 

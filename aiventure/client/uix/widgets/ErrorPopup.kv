@@ -1,0 +1,19 @@
+<ErrorPopup>
+
+	title: 'Woops!'
+	size_hint: (0.4, 0.4)
+	auto_dismiss: False
+
+	BoxLayout:
+
+		Label:
+			id: error_text
+			text: ''
+			halign: 'center'
+			valign: 'middle'
+
+		Button:
+			text: 'Ok'
+			on_release: root.dismiss()
+			size_hint: (1,None)
+			height: 32

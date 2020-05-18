@@ -1,6 +1,5 @@
 from typing import *
 import re
-import sys
 import time
 import traceback
 import threading
@@ -8,55 +7,13 @@ import threading
 from func_timeout import func_timeout, FunctionTimedOut
 from kivy.logger import Logger
 from kivy.uix.button import Button
-from kivy.uix.popup import Popup
 from kivy.uix.screenmanager import Screen
 
+from aiventure.client.uix.widgets import ErrorPopup
 from aiventure.common.utils import StopThreadException
-from aiventure.client.utils import init_widget
 
 re_tag_start = r'\[[^/\[\]]+\]'
 re_tag_end = r'\[/[^\[\]]+\]'
-
-
-class MenuPopup(Popup):
-    """
-    The menu popup, with resume, save/load, and exit to main menu options.
-    """
-    def __init__(self, **kargs):
-        super(MenuPopup, self).__init__(**kargs)
-        init_widget(self)
-
-    def on_save(self) -> None:
-        """
-        Triggered when the user saves the adventure using the save button.
-        """
-        self.app.save_adventure()
-        self.screen.on_update()
-        self.dismiss()
-
-    def on_load(self) -> None:
-        """
-        Triggered when the user loads the adventure using the load button.
-        """
-        self.app.load_adventure()
-        self.screen.on_update()
-        self.dismiss()
-
-    def on_quit(self) -> None:
-        """
-        Triggered when the user quits the adventure using the quit button.
-        """
-        self.dismiss()
-        self.app.sm.current = 'menu'
-
-
-class ErrorPopup(Popup):
-    """
-    A simple error popup.
-    """
-    def __init__(self, **kargs):
-        super(ErrorPopup, self).__init__(**kargs)
-        init_widget(self)
 
 
 class PlayScreen(Screen):
@@ -178,18 +135,10 @@ class PlayScreen(Screen):
                 self.app.adventure.memory = text
         except FunctionTimedOut as e:
             result = e
-            popup = ErrorPopup()
-            popup.ids.error_text.text = 'The AI took too long to respond.\n' \
-                                        'Please try something else.'
-            popup.open()
-            Logger.info(f"AI: AI timed out.")
+            ErrorPopup.create_and_open('The AI took too long to respond.\nPlease try something else.')
         except Exception as e:
             result = e
-            popup = ErrorPopup()
-            popup.ids.error_text.text = 'An unexpected error occurred.\n' \
-                                        'Please try something else,\n' \
-                                        'or adjust your settings.'
-            popup.open()
+            ErrorPopup.create_and_open('The AI ran out of memory.\nPlease try something else.')
             Logger.error(f"AI: {traceback.format_exc()}")
         return result
 

@@ -1,6 +1,7 @@
 import importlib
 import json
 import os
+import re
 import sys
 from threading import Thread
 from typing import *
@@ -16,6 +17,9 @@ from aiventure.common.adventure import Adventure
 from aiventure.client.uix.menu import MenuScreen
 from aiventure.client.uix.play import PlayScreen
 from aiventure.common.utils import get_save_name, is_model_valid
+
+KIVY_SCREEN_DIR = os.path.join('aiventure', 'client', 'uix')
+KIVY_WIDGET_DIR = os.path.join('aiventure', 'client', 'uix', 'widgets')
 
 
 class App(KivyApp):
@@ -94,10 +98,30 @@ class App(KivyApp):
         Initializes the screen manager, loads all screen kivy files and their associated python modules.
         """
         self.sm = ScreenManager()
-        self.screens = {'menu': MenuScreen, 'play': PlayScreen }
-        for n, s in self.screens.items():
-            Builder.load_file(f'aiventure/client/uix/{n}.kv')
-            self.sm.add_widget(s(name=n))
+
+        # Load and build all widget kv files
+        for file_name in os.listdir(KIVY_WIDGET_DIR):
+            if file_name.endswith('.kv'):
+                kv_path = os.path.join(KIVY_WIDGET_DIR, file_name)
+                Builder.load_file(kv_path)
+
+        # Load and build all screen kv files
+        for file_name in os.listdir(KIVY_SCREEN_DIR):
+            if file_name.endswith('.kv'):
+                kv_path = os.path.join(KIVY_SCREEN_DIR, file_name)
+                Builder.load_file(kv_path)
+                # If there is an associated python file in the same directory,
+                # load it and make it an available screen to the screen manager
+                try:
+                    name = os.path.splitext(file_name)[0]
+                    class_name = name.capitalize() + 'Screen'
+                    py = re.sub(r'[\\\/]', '.', os.path.splitext(kv_path)[0])
+                    m = importlib.import_module(py)
+                    scls = getattr(m, class_name)
+                    self.sm.add_widget(scls(name=name))
+                except (ImportError, ModuleNotFoundError):
+                    pass
+
         self.sm.current = 'menu'
 
     def get_user_path(self, *args: str) -> str:
