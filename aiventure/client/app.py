@@ -5,6 +5,7 @@ import re
 import sys
 from threading import Thread
 from typing import *
+from types import *
 
 from kivy.app import App as KivyApp
 from kivy.config import ConfigParser
@@ -14,9 +15,7 @@ from kivy.uix.screenmanager import ScreenManager
 
 from aiventure.common.ai import AI
 from aiventure.common.adventure import Adventure
-from aiventure.client.uix.menu import MenuScreen
-from aiventure.client.uix.play import PlayScreen
-from aiventure.common.utils import get_save_name, is_model_valid
+from aiventure.common.utils import get_save_name, is_model_valid, split_all
 
 KIVY_SCREEN_DIR = os.path.join('aiventure', 'client', 'uix')
 KIVY_WIDGET_DIR = os.path.join('aiventure', 'client', 'uix', 'widgets')
@@ -36,7 +35,9 @@ class App(KivyApp):
         # Threading
         self.threads: Dict[str, Thread] = {}
         # Modules
+        self.available_modules: List[str] = []
         self.loaded_modules: Dict[str, str] = {}
+        self.events: Dict[str, List[Callable]] = {}
         self.input_filters: List[Callable[[str], str]] = []
         self.output_filters: List[Callable[[str], str]] = []
         self.display_filter: Optional[Callable[[List[str]], str]] = None
@@ -67,9 +68,9 @@ class App(KivyApp):
             'repetition_penalty': 1.1
         })
         self.config.setdefaults('modules', {
-            'input_filters': 'aiventure:filters',
-            'output_filters': 'aiventure:filters',
-            'display_filter': 'aiventure:filters'
+            'input_filters': 'aiventure.filters',
+            'output_filters': 'aiventure.filters',
+            'display_filter': 'aiventure.filters'
         })
         self.config.write()
 
@@ -79,19 +80,15 @@ class App(KivyApp):
         """
         sys.path.append(self.config.get('general', 'userdir'))
 
-        for f in self.config.get('modules', 'input_filters').split(','):
-            domain, module = f.split(':')
-            Logger.info(f'Modules: Loading {f}.filter_input')
-            self.input_filters += [self.load_submodule(domain, module, 'filter_input')]
+        # get every subdirectory in modules with an __init__.py
+        module_paths = [
+            os.path.split(d[0])[-1]
+            for d in os.walk(self.get_user_path('modules'))
+            if '__init__.py' in d[2]
+        ][1:]
 
-        for f in self.config.get('modules', 'output_filters').split(','):
-            domain, module = f.split(':')
-            Logger.info(f'Modules: Loading {f}.filter_output')
-            self.output_filters += [self.load_submodule(domain, module, 'filter_output')]
-
-        domain, module = self.config.get('modules', 'display_filter').split(':')
-        Logger.info(f'Modules: Loading {f}.filter_display')
-        self.display_filter = self.load_submodule(domain, module, 'filter_display')
+        # load them all
+        [self.load_module(m) for m in module_paths]
 
     def init_ui(self) -> None:
         """
@@ -148,35 +145,32 @@ class App(KivyApp):
         """
         return [m.name for m in os.scandir(self.get_user_path('models')) if is_model_valid(m.path)]
 
-    def get_module_path(self, domain: str, module: str) -> str:
-        return self.get_user_path('modules', domain, f'{module}.py')
-
-    def load_module(self, domain: str, module: str) -> Any:
+    def load_module(self, modulepath: str) -> None:
         """
-        Loads a module and returns it (if it hasn't been loaded already).
+        Loads a module.
 
-        :param domain: The module domain.
-        :param module: The module to load from the given domain.
-        :return: The loaded module.
+        :param modulepath: The module path, separated by dots.
         """
-        k = f'{domain}:{module}'
-        v = self.loaded_modules.get(k)
-        if v is None:
-            v = importlib.import_module(f'.{module}', f'modules.{domain}')
-            self.loaded_modules[k] = v
-        return v
+        module = importlib.import_module(f'modules.{modulepath}')
+        self.load_events(module)
 
-    def load_submodule(self, domain: str, module: str, submodule: str) -> str:
-        """
-        Loads a submodule (a method, class, or variable from a given module).
+    def load_events(self, module: ModuleType):
+        event_dict = getattr(module, "events")
+        events = [
+            (
+                k,
+                self.load_submodule(f'{module.__name__}.{v}', k)
+            )
+            for k, v in event_dict.items()
+        ]
+        for (k, v) in events:
+            if self.events.get(k) is None:
+                self.events[k] = []
+            self.events[k] += [v]
 
-        :param domain: The module domain.
-        :param module: The module to load from the given domain.
-        :param submodule: The submodule to load from the given module.
-        :return: The loaded submodule.
-        """
-        m = self.load_module(domain, module)
-        return getattr(m, submodule)
+    def load_submodule(self, modulepath: str, submodule: str) -> Any:
+        a = importlib.import_module(modulepath)
+        return getattr(a, submodule)
 
     # SAVING AND LOADING
 

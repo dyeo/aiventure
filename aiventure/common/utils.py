@@ -1,6 +1,6 @@
 import re
 import os
-
+import sys
 
 class StopThreadException(BaseException):
     """
@@ -29,3 +29,25 @@ def is_model_valid(model_path: str) -> bool:
     return os.path.isfile(os.path.join(model_path, 'pytorch_model.bin')) \
         and os.path.isfile(os.path.join(model_path, 'config.json')) \
         and os.path.isfile(os.path.join(model_path, 'vocab.json'))
+
+
+def split_all(path):
+    """
+    Splits an entire path into its consecutive parts.
+
+    :param path: The path to split.
+    :return: A list of all consecutive parts of the path.
+    """
+    result = []
+    while 1:
+        parts = os.path.split(path)
+        if parts[0] == path:  # sentinel for absolute paths
+            result.insert(0, parts[0])
+            break
+        elif parts[1] == path: # sentinel for relative paths
+            result.insert(0, parts[1])
+            break
+        else:
+            path = parts[0]
+            result.insert(0, parts[1])
+    return result
