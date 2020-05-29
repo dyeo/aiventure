@@ -6,7 +6,4 @@ events = {
     "on_input": "events",
     "on_output": "events",
     "on_display": "events",
-    "on_altergen": "events",
-    "on_retry": "events",
-    "on_revert": "events"
 }

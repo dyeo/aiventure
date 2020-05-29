@@ -122,7 +122,9 @@ class PlayScreen(Screen):
         result = None
         try:
             if self.altergen:
-                text += ' ' + self._generate(text, record=False, end=self.edit_index)
+                text
+                text += ' ' + \
+                        self._generate(text, record=False, end=self.edit_index)
             if self.mode == '':
                 self._generate(text)
             elif self.mode == 'c':
@@ -142,7 +144,12 @@ class PlayScreen(Screen):
             Logger.error(f"AI: {traceback.format_exc()}")
         return result
 
-    def _generate(self, text, record: bool = True, end: Optional[int] = None) -> Optional[str]:
+    def _generate(
+        self,
+        text: str,
+        record: bool = True,
+        end: int = None,
+    ) -> Optional[str]:
         """
         Tells the AI to generate new text.
 
@@ -151,29 +158,33 @@ class PlayScreen(Screen):
         :param end: The entry to start generating from.
         :return: The result of the AI generation, or `None` if the AI timed out.
         """
-        context = self.app.adventure.context
-        context += (' ' + self.app.adventure.memory) if self.app.adventure.memory else ''
-        prompt = ' '.join(self.app.adventure.story + ([text] if text else []))
-        timeout = self.app.config.getfloat('ai', 'timeout')
-        result = func_timeout(
-            604800.0 if timeout <= 0 else timeout,
-            self.app.ai.generate,
-            args=(
-                context,
-                prompt,
-                self.app.config.getint('ai', 'max_length'),
-                self.app.config.getint('ai', 'beam_searches'),
-                self.app.config.getfloat('ai', 'temperature'),
-                self.app.config.getint('ai', 'top_k'),
-                self.app.config.getfloat('ai', 'top_p'),
-                self.app.config.getfloat('ai', 'repetition_penalty'),
-            ),
-        )
-        result = self.filter_output(result)
+        self._prime_ai()
+        input_ids = self.app.fire_event('on_input', in_text=text, ai=self.app.ai, adventure=self.app.adventure, end=end)
+        result = self._generate_inner(input_ids)
         if record:
             self.app.adventure.actions.append(text)
+        result = self.app.fire_event('on_output', out_text=result, ai=self.app.ai, adventure=self.app.adventure)
+        if record:
             self.app.adventure.results.append(result)
         return result
+
+    def _generate_inner(self, input_ids):
+        timeout = self.app.config.getfloat('ai', 'timeout')
+        return func_timeout(
+            604800.0 if timeout <= 0 else timeout,
+            self.app.ai.generate,
+            args=(input_ids,),
+        )
+
+    def _prime_ai(self):
+        self.app.ai.prime(
+            self.app.config.getint('ai', 'max_length'),
+            self.app.config.getint('ai', 'beam_searches'),
+            self.app.config.getfloat('ai', 'temperature'),
+            self.app.config.getint('ai', 'top_k'),
+            self.app.config.getfloat('ai', 'top_p'),
+            self.app.config.getfloat('ai', 'repetition_penalty'),
+        )
 
     def on_entry_selected(self, _, ref) -> None:
         """
@@ -320,4 +331,4 @@ class PlayScreen(Screen):
         :param story: The story.
         :return: The filtered story text.
         """
-        return self.app.display_filter(story)
+        return self.app.fire_event('on_display', ai=self.app.ai, adventure=self.app.adventure)

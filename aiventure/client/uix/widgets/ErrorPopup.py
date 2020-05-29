@@ -9,12 +9,13 @@ class ErrorPopup(Popup):
     """
     A simple error popup.
     """
-    def __init__(self, **kargs):
-        super(ErrorPopup, self).__init__(**kargs)
+    def __init__(self, **kwargs):
+        super(ErrorPopup, self).__init__(**kwargs)
         init_widget(self)
 
-    @staticmethod
-    def create_and_open(text) -> ErrorPopup:
-        popup = ErrorPopup()
-        popup.ids.error_text = text
-        return popup
+
+def create_and_open(text) -> ErrorPopup:
+    popup = ErrorPopup()
+    popup.ids.error_text = text
+    popup.open()
+    return popup

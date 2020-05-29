@@ -152,14 +152,14 @@ class App(KivyApp):
         :param modulepath: The module path, separated by dots.
         """
         module = importlib.import_module(f'modules.{modulepath}')
-        self.load_events(module)
+        self._load_events(module)
 
-    def load_events(self, module: ModuleType):
+    def _load_events(self, module: ModuleType):
         event_dict = getattr(module, "events")
         events = [
             (
                 k,
-                self.load_submodule(f'{module.__name__}.{v}', k)
+                self._load_submodule(f'{module.__name__}.{v}', k)
             )
             for k, v in event_dict.items()
         ]
@@ -168,9 +168,15 @@ class App(KivyApp):
                 self.events[k] = []
             self.events[k] += [v]
 
-    def load_submodule(self, modulepath: str, submodule: str) -> Any:
+    def _load_submodule(self, modulepath: str, submodule: str) -> Any:
         a = importlib.import_module(modulepath)
         return getattr(a, submodule)
+
+    def fire_event(self, event_id: str, *args: Any, **kwargs: Any):
+        res = None
+        for e in self.events.get(event_id):
+            res = e(*args, **kwargs)
+        return res
 
     # SAVING AND LOADING
 
