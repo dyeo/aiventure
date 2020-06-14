@@ -197,7 +197,7 @@ class MenuScreen(Screen):
         """
         self.app.adventure.name = self.ids.input_name.text
         self.app.adventure.context = self.ids.input_context.text
-        self.app.adventure.actions.append(self.ids.input_prompt.text)
+        self.app.adventure.story.append(self.ids.input_prompt.text)
         self.app.sm.current = 'play'
 
     def update_button_start_new(self) -> None:

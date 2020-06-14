@@ -41,7 +41,7 @@ def on_output(out_text: str, ai: AI, adventure: Adventure) -> str:
     """
     result = formalize_quotes(out_text).strip()
     result = remove_sentence_fragment(result).strip()
-    result = fix_end_quote(result, pre=adventure.actions[-1]).strip()
+    result = fix_end_quote(result, pre=adventure.story[-1]).strip()
     result = clean_white_space(result).strip()
     return result
 
@@ -62,12 +62,8 @@ def on_display(ai: AI, adventure: Adventure) -> str:
         story_elem = story[i].strip()
         if len(story_elem) == 0:
             continue
-        ref = 'c'
-        if i > 0:
-            ref = 'a' if is_action else 'r'
-            ref += str(i - 1)
+        ref = 'c' if i == 0 else ('a' + str(i - 1))
         story_elem = f'[ref={ref}]{story_elem}[/ref]'
-        story_elem = f'[color=#ffff00]{story_elem}[/color]' if is_action else story_elem
         if h < 0:
             result += story_elem
         else:

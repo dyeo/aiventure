@@ -27,14 +27,15 @@ class PlayScreen(Screen):
         self.mode: str = ''
         self.edit_index: int = 0
         self.altergen: bool = False
+        self.is_sending: bool = False
 
     def on_enter(self) -> None:
         """
         Called upon entering this screen.
         """
         self.ids.output_text.bind(on_ref_press=self.on_entry_selected)
-        if len(self.app.adventure.actions) == 1 and len(self.app.adventure.results) == 0:
-            prompt = self.app.adventure.actions.pop(0)
+        if len(self.app.adventure.story) == 1:
+            prompt = self.app.adventure.story.pop(0)
             self.on_send(prompt)
         else:
             self.on_update()
@@ -52,7 +53,7 @@ class PlayScreen(Screen):
         if self.mode == '':
             buttons += [self.ids.button_memory]
             buttons.remove(self.ids.button_cancel)
-            if len(self.app.adventure.results) > 0:
+            if len(self.app.adventure.story) > 0:
                 buttons += [self.ids.button_revert]
                 buttons += [self.ids.button_retry]
         else:
@@ -99,6 +100,7 @@ class PlayScreen(Screen):
 
         :param text: The text in the input text box when send is pressed.
         """
+        self.is_sending = True
         text = self.filter_input(text)
         self.ids.input.disabled = True
         self.ids.button_send.disabled = True
@@ -112,6 +114,7 @@ class PlayScreen(Screen):
             self.try_autosave()
         self.ids.input.disabled = False
         self.ids.button_send.disabled = False
+        self.is_sending = False
 
     def _try_send(self, text: str) -> Optional[BaseException]:
         """
@@ -130,9 +133,7 @@ class PlayScreen(Screen):
             elif self.mode == 'c':
                 self.app.adventure.context = text
             elif self.mode == 'a':
-                self.app.adventure.actions[self.edit_index] = text
-            elif self.mode == 'r':
-                self.app.adventure.results[self.edit_index] = text
+                self.app.adventure.story[self.edit_index] = text
             elif self.mode == 'm':
                 self.app.adventure.memory = text
         except FunctionTimedOut as e:
@@ -160,12 +161,12 @@ class PlayScreen(Screen):
         """
         self._prime_ai()
         input_ids = self.app.fire_event('on_input', in_text=text, ai=self.app.ai, adventure=self.app.adventure, end=end)
+        if record and text:
+            self.app.adventure.story.append(text)
         result = self._generate_inner(input_ids)
-        if record:
-            self.app.adventure.actions.append(text)
         result = self.app.fire_event('on_output', out_text=result, ai=self.app.ai, adventure=self.app.adventure)
-        if record:
-            self.app.adventure.results.append(result)
+        if record and result:
+            self.app.adventure.story.append(result)
         return result
 
     def _generate_inner(self, input_ids):
@@ -193,21 +194,21 @@ class PlayScreen(Screen):
         :param _: Unused.
         :param ref: The reference string for the story entry.
         'c' for context.
-        'a' for action.
-        'r' for result.
-        'a' and 'r' will be proceeded immediately by a number, which specifies their index in the
-        adventure's `full_story` (not their indices in their respective `actions` and `results` lists).
+        'a' for any other alteration.
+        'a' will be proceeded immediately by a number, which specifies their index in the
+        adventure's story.
         """
-        match = re.match(r'([a-z])([0-9]+)?', ref)
-        self.mode = match.group(1)
+        if self.is_sending:
+            return
+        match = re.match(r'([a-z])?([0-9]+)?', ref)
+        if match.group(1):
+            self.mode = match.group(1)
         if match.group(2):
-            self.edit_index = int(int(match.group(2))/2)
+            self.edit_index = int(match.group(2))
         if self.mode == 'c':
             self.ids.input.text = self.app.adventure.context
         elif self.mode == 'a':
-            self.ids.input.text = self.app.adventure.actions[self.edit_index]
-        elif self.mode == 'r':
-            self.ids.input.text = self.app.adventure.results[self.edit_index]
+            self.ids.input.text = self.app.adventure.story[self.edit_index]
         self.on_update(scroll=False)
 
     # BOTTOM MENU
@@ -225,8 +226,7 @@ class PlayScreen(Screen):
         """
         Triggered when button_revert is pressed.
         """
-        self.app.adventure.actions = self.app.adventure.actions[:-1]
-        self.app.adventure.results = self.app.adventure.results[:-1]
+        self.app.adventure.story = self.app.adventure.story[:-1]
         self.on_update()
         self.try_autosave()
 
@@ -234,10 +234,8 @@ class PlayScreen(Screen):
         """
         Triggered when button_retry is pressed.
         """
-        action = self.app.adventure.actions[-1]
-        self.app.adventure.actions = self.app.adventure.actions[:-1]
-        self.app.adventure.results = self.app.adventure.results[:-1]
-        self.on_send(action)
+        self.app.adventure.story.pop(-1)
+        self.on_send(self.app.adventure.story.pop(-1))
 
     def on_memory(self) -> None:
         """
