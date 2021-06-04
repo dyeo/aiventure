@@ -1,4 +1,5 @@
-#: import limit_input aiventure.client.utils.limit_input
+#:kivy 2.0.0
+#:import limit_input aiventure.client.utils.limit_input
 
 <SelectableLabel>:
     # Draw a background to indicate selection
@@ -83,19 +84,6 @@
                     do_scroll_y: False
 
                 Label:
-                    text:'Story Context'
-                    size_hint: (1,None)
-                    height:32
-
-                TextInput:
-                    id: input_context
-                    text: ''
-                    hint_text: 'Enter a permanent story context, eg. "You are a lone adventurer, travelling the vast continent of Ileryn, performing good deeds for those in need."'
-                    on_text: limit_input(self, 512, root.update_button_start_new)
-                    multiline: True
-                    do_scroll_y: True
-
-                Label:
                     text:'Starting Prompt'
                     size_hint: (1,None)
                     height:32
@@ -104,7 +92,20 @@
                     id: input_prompt
                     text: ''
                     hint_text: 'Enter a prompt to start the story, eg. "You are in a dungeon, searching for a rare artifact you have been sent to retrieve, when suddenly"'
-                    on_text: limit_input(self, 512, root.update_button_start_new)
+                    on_text: limit_input(self, 2048, root.update_button_start_new)
+                    multiline: True
+                    do_scroll_y: True
+
+                Label:
+                    text:'Memory'
+                    size_hint: (1,None)
+                    height:32
+
+                TextInput:
+                    id: input_memory
+                    text: ''
+                    hint_text: 'Enter a permanent story context, eg. "You are a lone adventurer, travelling the vast continent of Ileryn, performing good deeds for those in need."'
+                    on_text: limit_input(self, 2048, root.update_button_start_new)
                     multiline: True
                     do_scroll_y: True
 

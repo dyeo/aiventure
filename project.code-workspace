@@ -1,0 +1,36 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/.git": true,
+			"**/.svn": true,
+			"**/.hg": true,
+			"**/CVS": true,
+			"**/.DS_Store": true,
+			"**/*.meta": true,
+			"**/__pycache__": true,
+			"**/__env__": true,
+			"**/.vs": true
+		},
+		"window.title": "${dirty}${activeEditorShort}${separator}aiventure${separator}${appName}",
+		"explorerExclude.backup": null,
+		"python.pythonPath": "__env__",
+		"python.analysis.extraPaths": ["${workspaceFolder}/aiventure/client", "${workspaceFolder}/aiventure/common"]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Python: Run Client",
+				"type": "python",
+				"request": "launch",
+				"program": "client.py",
+				"console": "integratedTerminal"
+			}
+		]
+	}
+}

@@ -66,7 +66,7 @@ class PlayScreen(Screen):
         if scroll:
             self.ids.scroll_input.scroll_y = 0
         # update output text
-        self.ids.output_text.text = self.filter_display(self.app.adventure.full_story)
+        self.ids.output_text.text = self.filter_display(self.app.adventure.story)
         # temporarily disabling fancy text outputting because it's broken
         """
         if self.app.threads.get('output'):
@@ -130,10 +130,11 @@ class PlayScreen(Screen):
                         self._generate(text, record=False, end=self.edit_index)
             if self.mode == '':
                 self._generate(text)
-            elif self.mode == 'c':
-                self.app.adventure.context = text
             elif self.mode == 'a':
-                self.app.adventure.story[self.edit_index] = text
+                if not text.strip():
+                    del self.app.adventure.story[self.edit_index]
+                else:
+                    self.app.adventure.story[self.edit_index] = text
             elif self.mode == 'm':
                 self.app.adventure.memory = text
         except FunctionTimedOut as e:
@@ -141,7 +142,7 @@ class PlayScreen(Screen):
             ErrorPopup.create_and_open('The AI took too long to respond.\nPlease try something else.')
         except Exception as e:
             result = e
-            ErrorPopup.create_and_open('The AI ran out of memory.\nPlease try something else.')
+            ErrorPopup.create_and_open('The AI ran failed unexpectedly.\nPlease try something else.')
             Logger.error(f"AI: {traceback.format_exc()}")
         return result
 
@@ -193,21 +194,16 @@ class PlayScreen(Screen):
 
         :param _: Unused.
         :param ref: The reference string for the story entry.
-        'c' for context.
         'a' for any other alteration.
-        'a' will be proceeded immediately by a number, which specifies their index in the
+        'a' will be proceeded immediately by a number, which specifies the index in the
         adventure's story.
         """
         if self.is_sending:
             return
-        match = re.match(r'([a-z])?([0-9]+)?', ref)
-        if match.group(1):
-            self.mode = match.group(1)
-        if match.group(2):
-            self.edit_index = int(match.group(2))
-        if self.mode == 'c':
-            self.ids.input.text = self.app.adventure.context
-        elif self.mode == 'a':
+        self.mode = 'a'
+        match = re.match(r'([0-9]+)', ref)
+        if match:
+            self.edit_index = int(match.group(1))
             self.ids.input.text = self.app.adventure.story[self.edit_index]
         self.on_update(scroll=False)
 
@@ -267,7 +263,7 @@ class PlayScreen(Screen):
         Updates the output text with a cool scrolling text effect.
         """
         prev_text = self.ids.output_text.text
-        next_text = self.filter_display(self.app.adventure.full_story)
+        next_text = self.filter_display(self.app.adventure.story)
         text_diff = len(next_text) - len(prev_text)
         try:
             if 0 < text_diff <= 800:
@@ -294,7 +290,7 @@ class PlayScreen(Screen):
                     time.sleep(0.025)
         except StopThreadException:
             pass
-        self.ids.output_text.text = self.filter_display(self.app.adventure.full_story)
+        self.ids.output_text.text = self.filter_display(self.app.adventure.story)
 
     # FILTERING
 

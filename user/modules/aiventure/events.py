@@ -20,12 +20,11 @@ def on_input(in_text: Union[str, List[int]], ai: AI, adventure: Adventure, end: 
         in_text = ai.decode(in_text)
     end = len(adventure.story) if end is None else end
     in_text = formalize_quotes(in_text).strip()
-    context = adventure.context
-    context += (' ' + adventure.memory) if adventure.memory else ''
+    context = (' ' + adventure.memory) if adventure.memory else ''
     prompt = ' '.join(adventure.story[:end] + ([in_text] if in_text else []))
     input_tokens = ai.encode(context)
     prompt_tokens = ai.encode(prompt)
-    memory = 1024 - ai.max_length - len(input_tokens)
+    memory = ai.max_memory - ai.max_length - len(input_tokens)
     input_tokens.extend(prompt_tokens[-memory:])
     return input_tokens
 
@@ -54,16 +53,14 @@ def on_display(ai: AI, adventure: Adventure) -> str:
     :param adventure: The adventure to display.
     :return: The final, formatted adventure string.
     """
-    story = adventure.full_story
+    story = adventure.story
     result = ''
     for i in range(0, len(story)):
-        is_action = ((i + 1) % 2) == 0
         h = i - 1
         story_elem = story[i].strip()
         if len(story_elem) == 0:
             continue
-        ref = 'c' if i == 0 else ('a' + str(i - 1))
-        story_elem = f'[ref={ref}]{story_elem}[/ref]'
+        story_elem = f'[ref={i}]{story_elem}[/ref]'
         if h < 0:
             result += story_elem
         else:

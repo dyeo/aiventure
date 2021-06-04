@@ -60,4 +60,4 @@ def clean_white_space(text: str):
     :param text: The text to process.
     :return: The processed text.
     """
-    return re.sub(r' +', ' ', text)
+    return re.sub(r'(\s)+', r'\g<1>', text)

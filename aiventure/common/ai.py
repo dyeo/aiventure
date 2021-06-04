@@ -1,16 +1,26 @@
 from typing import *
-import re
+import os
+import json
 
 import torch
 import random
 import numpy
 
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
+from transformers import GPT2LMHeadModel, AutoTokenizer, GPTNeoForCausalLM
 
+model_types = {
+    "": GPT2LMHeadModel,
+    "neo": GPTNeoForCausalLM 
+} # type: Dict[str, Type]
+
+model_memory_lengths = {
+    "": lambda c: c["n_positions"],
+    "neo": lambda c: c["max_position_embeddings"]
+}
 
 class AI(object):
     """
-    The class responsible for handling raw text-generation using a gpt-2 model.
+    The class responsible for handling raw text-generation using a LM model.
     """
     def __init__(
         self,
@@ -22,6 +32,7 @@ class AI(object):
         self.model_path = str(model_path)
         self.use_gpu = torch.cuda.is_available() and use_gpu
         self.dtype = torch.float16
+        self.ttype = torch.long
         self.device = torch.device("cuda" if self.use_gpu else "cpu")
 
         self.max_length: int = 60
@@ -31,20 +42,36 @@ class AI(object):
         self.top_p: float = 0.9
         self.repetition_penalty: float = 1.1
 
-        seed = random.randint(0, 2147483647)
-        numpy.random.seed(seed)
-        torch.random.manual_seed(seed)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
+        self.eos_token_id = self.tokenizer.encode("<|endoftext|>")[0]
+        
+        self.reseed()
+        
+        model_key = ""
+        with open(os.path.join(str(self.model_path), "config.json")) as f:
+            model_config = json.load(f)
+        neo_in_path = "gpt-neo" in str(model_path).lower()
+        neo_in_architectures = "architectures" in model_config and "GPTNeoForCausalLM" in model_config["architectures"]
+        neo_in_model_type = "model_type" in model_config and "gpt_neo" == model_config["model_type"]
+        model_key = "neo" if neo_in_path or neo_in_architectures or neo_in_model_type else model_key
 
-        self.tokenizer = GPT2Tokenizer.from_pretrained(self.model_path)
-        self.eos_token_id = self.tokenizer.encode('<|endoftext|>')[0]
-
-        self.model = GPT2LMHeadModel.from_pretrained(self.model_path)
-        self.model.to(self.dtype).to(self.device)
-        self.model.eval()
+        self.max_memory: int = model_memory_lengths[model_key](model_config)
+        self.model_type = model_types[model_key]
+        
+        try:
+            self.model = self.model_type.from_pretrained(self.model_path)
+            self.model.to(self.dtype).to(self.device)
+            self.model.eval()
+        except Exception as e:
+            print("")
 
     @property
     def model_info(self) -> str:
-        return f'{self.dtype} precision model running on {"gpu" if self.use_gpu else "cpu"}'
+        return "; ".join([
+            "gpu" if self.use_gpu else "cpu",
+            str(self.dtype)[6:],
+            f"{self.max_memory} tokens"
+        ])
 
     def prime(
         self,
@@ -61,6 +88,11 @@ class AI(object):
         self.top_k = top_k
         self.top_p = top_p
         self.repetition_penalty = repetition_penalty
+
+    def reseed(self):
+        seed = random.randint(0, 2147483647)
+        numpy.random.seed(seed)
+        torch.random.manual_seed(seed)
 
     def encode(
         self,
@@ -82,17 +114,18 @@ class AI(object):
         self,
         input_ids: Union[List[int], str]
     ):
-        if input_ids is str:
+        self.reseed()      
+        if isinstance(input_ids, str):
             input_ids = self.encode(input_ids)
-        assert 0 < len(input_ids) <= 1024, "Input exceeds maximum AI memory!"
+        assert 0 < len(input_ids) <= self.max_memory, "Input exceeds maximum AI memory!"
         input_len = len(input_ids)
-        input_ids = torch.tensor([input_ids], dtype=torch.long, device=self.device)
+        input_ids = torch.tensor([input_ids], dtype=self.ttype, device=self.device)
         result = self.model.generate(
             input_ids=input_ids,
             min_length=input_len,
             max_length=input_len + self.max_length,
-            do_sample=True,
-            num_beams=self.beam_searches,
+            do_sample=(self.beam_searches > 0),
+            num_beams=max(self.beam_searches, 1),
             temperature=self.temperature,
             top_p=self.top_p,
             top_k=self.top_k,
@@ -101,3 +134,4 @@ class AI(object):
             eos_token_id=self.eos_token_id,
         )
         return self.decode(result[0][input_len:])
+        

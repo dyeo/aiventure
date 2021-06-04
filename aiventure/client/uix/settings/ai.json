@@ -16,7 +16,7 @@
 	{
         "type": "numeric",
         "title": "Beam Searches",
-        "desc": "Number of searches the AI performs to find a higher cumulative text sequence probability.\nDefault is 1.",
+        "desc": "Number of searches the AI performs to find a higher cumulative text sequence probability.\nDefault is 1. 0 to disable.",
         "section": "ai",
         "key": "beam_searches"
     },

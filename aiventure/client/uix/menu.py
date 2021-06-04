@@ -181,6 +181,7 @@ class MenuScreen(Screen):
             self.app.ai = AI(model_path)
             Logger.info(f'AI: Model loaded at "{model_path}"')
         except Exception as e:
+            Logger.exception(e)
             self.app.ai = None
             self.update_status_text(f'Error Loading Model "{model_name}"')
         else:
@@ -196,8 +197,8 @@ class MenuScreen(Screen):
         Starts a new game and goes to the in-game screen.
         """
         self.app.adventure.name = self.ids.input_name.text
-        self.app.adventure.context = self.ids.input_context.text
         self.app.adventure.story.append(self.ids.input_prompt.text)
+        self.app.adventure.memory = self.ids.input_memory.text
         self.app.sm.current = 'play'
 
     def update_button_start_new(self) -> None:
@@ -207,7 +208,6 @@ class MenuScreen(Screen):
         self.ids.button_start_new.disabled = not (
             self.app.ai and
             self.ids.input_name.text.strip() and
-            self.ids.input_context.text.strip() and
             self.ids.input_prompt.text.strip()
         )
 
